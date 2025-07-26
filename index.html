@@ -384,7 +384,9 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="employeeName">Employee Name <span class="required">*</span></label>
-                        <input type="text" id="employeeName" name="employeeName" required>
+                        <select id="employeeName" name="employeeName" required>
+                            <option value="">Select employee...</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
@@ -492,6 +494,22 @@
         <!-- Admin Tab -->
         <div id="adminTab" class="tab-content">
             <div class="admin-section">
+                <h3>Add New Employee</h3>
+                <div class="form-group">
+                    <label for="newEmployeeName">Employee Name</label>
+                    <input type="text" id="newEmployeeName" placeholder="Enter employee full name">
+                </div>
+                <button class="admin-btn" onclick="addEmployee()">Add Employee</button>
+            </div>
+
+            <div class="admin-section">
+                <h3>Current Employees</h3>
+                <div id="employeeList" class="project-list">
+                    <!-- Employees will be loaded here -->
+                </div>
+            </div>
+
+            <div class="admin-section">
                 <h3>Add New Project</h3>
                 <div class="form-row">
                     <div class="form-group">
@@ -515,10 +533,17 @@
             </div>
 
             <div class="admin-section">
-                <h3>Import/Export Projects</h3>
+                <h3>Import/Export Data</h3>
                 <div class="form-group">
-                    <label for="importData">Import Projects (JSON format)</label>
-                    <textarea id="importData" placeholder='[{"number":"PRJ-001","name":"Project Alpha"},{"number":"PRJ-002","name":"Project Beta"}]'></textarea>
+                    <label for="importEmployees">Import Employees (JSON format)</label>
+                    <textarea id="importEmployees" placeholder='["John Smith","Jane Doe","Mike Wilson"]'></textarea>
+                </div>
+                <button class="admin-btn" onclick="importEmployees()">Import Employees</button>
+                <button class="admin-btn" onclick="exportEmployees()">Export Employees</button>
+
+                <div class="form-group">
+                    <label for="importProjects">Import Projects (JSON format)</label>
+                    <textarea id="importProjects" placeholder='[{"number":"PRJ-001","name":"Project Alpha"},{"number":"PRJ-002","name":"Project Beta"}]'></textarea>
                 </div>
                 <button class="admin-btn" onclick="importProjects()">Import Projects</button>
                 <button class="admin-btn" onclick="exportProjects()">Export Projects</button>
@@ -531,7 +556,7 @@
         const ADMIN_PASSWORD = "admin123";
         let isAdminLoggedIn = false;
 
-        // Initialize with sample projects
+        // Initialize with sample data
         let projects = [
             {number: "PRJ-2024-001", name: "Website Redesign"},
             {number: "PRJ-2024-002", name: "Mobile App Development"},
@@ -540,12 +565,20 @@
             {number: "PRJ-2024-005", name: "Security Audit"}
         ];
 
-        // Load projects from storage or use defaults
+        let employees = [
+            "John Smith",
+            "Sarah Johnson", 
+            "Mike Wilson",
+            "Emily Davis",
+            "David Brown"
+        ];
+
+        // Load data from storage or use defaults
         function loadProjects() {
-            const stored = localStorage?.getItem('projects');
-            if (stored) {
+            const storedProjects = localStorage?.getItem('projects');
+            if (storedProjects) {
                 try {
-                    projects = JSON.parse(stored);
+                    projects = JSON.parse(storedProjects);
                 } catch (e) {
                     console.log('Using default projects');
                 }
@@ -554,12 +587,33 @@
             updateProjectList();
         }
 
-        // Save projects to storage
+        function loadEmployees() {
+            const storedEmployees = localStorage?.getItem('employees');
+            if (storedEmployees) {
+                try {
+                    employees = JSON.parse(storedEmployees);
+                } catch (e) {
+                    console.log('Using default employees');
+                }
+            }
+            updateEmployeeDropdown();
+            updateEmployeeList();
+        }
+
+        // Save data to storage
         function saveProjects() {
             try {
                 localStorage?.setItem('projects', JSON.stringify(projects));
             } catch (e) {
-                console.log('Cannot save to storage');
+                console.log('Cannot save projects to storage');
+            }
+        }
+
+        function saveEmployees() {
+            try {
+                localStorage?.setItem('employees', JSON.stringify(employees));
+            } catch (e) {
+                console.log('Cannot save employees to storage');
             }
         }
 
@@ -622,7 +676,21 @@
 
             if (tabName === 'admin') {
                 updateProjectList();
+                updateEmployeeList();
             }
+        }
+
+        // Update employee dropdown in the form
+        function updateEmployeeDropdown() {
+            const select = document.getElementById('employeeName');
+            select.innerHTML = '<option value="">Select employee...</option>';
+            
+            employees.forEach((employee) => {
+                const option = document.createElement('option');
+                option.value = employee;
+                option.textContent = employee;
+                select.appendChild(option);
+            });
         }
 
         // Update project dropdown in the form
@@ -695,6 +763,116 @@
             }
         });
 
+        // Add new employee
+        function addEmployee() {
+            const name = document.getElementById('newEmployeeName').value.trim();
+
+            if (!name) {
+                alert('Please enter employee name');
+                return;
+            }
+
+            // Check for duplicates
+            const exists = employees.some(emp => emp.toLowerCase() === name.toLowerCase());
+            if (exists) {
+                alert('Employee already exists');
+                return;
+            }
+
+            employees.push(name);
+            employees.sort(); // Keep alphabetically sorted
+            saveEmployees();
+            updateEmployeeDropdown();
+            updateEmployeeList();
+
+            // Clear input
+            document.getElementById('newEmployeeName').value = '';
+
+            alert('Employee added successfully!');
+        }
+
+        // Delete employee
+        function deleteEmployee(index) {
+            if (confirm(`Are you sure you want to delete "${employees[index]}"?`)) {
+                employees.splice(index, 1);
+                saveEmployees();
+                updateEmployeeDropdown();
+                updateEmployeeList();
+            }
+        }
+
+        // Update employee list in admin panel
+        function updateEmployeeList() {
+            const container = document.getElementById('employeeList');
+            container.innerHTML = '';
+
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No employees available</p>';
+                return;
+            }
+
+            employees.forEach((employee, index) => {
+                const item = document.createElement('div');
+                item.className = 'project-item';
+                item.innerHTML = `
+                    <div class="project-info">
+                        <div class="project-number">${employee}</div>
+                    </div>
+                    <button class="admin-btn delete-btn" onclick="deleteEmployee(${index})">Delete</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Import employees
+        function importEmployees() {
+            const data = document.getElementById('importEmployees').value.trim();
+            if (!data) {
+                alert('Please enter JSON data to import');
+                return;
+            }
+
+            try {
+                const imported = JSON.parse(data);
+                if (!Array.isArray(imported)) {
+                    throw new Error('Data must be an array');
+                }
+
+                // Validate structure
+                imported.forEach((employee, index) => {
+                    if (typeof employee !== 'string' || !employee.trim()) {
+                        throw new Error(`Invalid employee at index ${index}: must be a non-empty string`);
+                    }
+                });
+
+                if (confirm(`Import ${imported.length} employees? This will replace existing employees.`)) {
+                    employees = imported.map(emp => emp.trim()).sort();
+                    saveEmployees();
+                    updateEmployeeDropdown();
+                    updateEmployeeList();
+                    document.getElementById('importEmployees').value = '';
+                    alert('Employees imported successfully!');
+                }
+            } catch (e) {
+                alert('Invalid JSON format: ' + e.message);
+            }
+        }
+
+        // Export employees
+        function exportEmployees() {
+            const data = JSON.stringify(employees, null, 2);
+            document.getElementById('importEmployees').value = data;
+            
+            // Copy to clipboard if available
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(data).then(() => {
+                    alert('Employees exported! Data copied to clipboard and shown in the text area.');
+                });
+            } else {
+                alert('Employees exported! Data shown in the text area.');
+            }
+        }
+
         // Add new project
         function addProject() {
             const number = document.getElementById('newProjectNumber').value.trim();
@@ -760,7 +938,7 @@
 
         // Import projects
         function importProjects() {
-            const data = document.getElementById('importData').value.trim();
+            const data = document.getElementById('importProjects').value.trim();
             if (!data) {
                 alert('Please enter JSON data to import');
                 return;
@@ -784,7 +962,7 @@
                     saveProjects();
                     updateProjectDropdown();
                     updateProjectList();
-                    document.getElementById('importData').value = '';
+                    document.getElementById('importProjects').value = '';
                     alert('Projects imported successfully!');
                 }
             } catch (e) {
@@ -795,7 +973,7 @@
         // Export projects
         function exportProjects() {
             const data = JSON.stringify(projects, null, 2);
-            document.getElementById('importData').value = data;
+            document.getElementById('importProjects').value = data;
             
             // Copy to clipboard if available
             if (navigator.clipboard) {
@@ -916,6 +1094,7 @@ Submitted on: ${new Date().toLocaleString()}
 
         // Initialize the application
         loadProjects();
+        loadEmployees();
     </script>
 </body>
 </html>
