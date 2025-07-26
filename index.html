@@ -353,7 +353,21 @@
         
         <div class="tab-container">
             <button class="tab-button active" onclick="showTab('report')">Task Report</button>
-            <button class="tab-button" onclick="showTab('admin')">Manage Projects</button>
+            <button class="tab-button" id="adminTabBtn" onclick="showAdminTab()">Manage Projects</button>
+        </div>
+
+        <!-- Admin Login Modal -->
+        <div id="adminLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 40px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                <h2 style="color: #2c3e50; margin-bottom: 20px;">Admin Access Required</h2>
+                <p style="color: #666; margin-bottom: 30px;">Enter admin password to manage projects</p>
+                <input type="password" id="adminPassword" placeholder="Enter admin password" style="width: 100%; padding: 15px; border: 2px solid #e0e6ed; border-radius: 12px; font-size: 1rem; margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="verifyAdminPassword()" style="background: #667eea; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Login</button>
+                    <button onclick="closeAdminLogin()" style="background: #95a5a6; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+                <div id="loginError" style="color: #e74c3c; margin-top: 15px; display: none;">Incorrect password. Please try again.</div>
+            </div>
         </div>
 
         <!-- Task Report Tab -->
@@ -513,6 +527,10 @@
     </div>
 
     <script>
+        // Admin password - Change this to your desired password
+        const ADMIN_PASSWORD = "admin123";
+        let isAdminLoggedIn = false;
+
         // Initialize with sample projects
         let projects = [
             {number: "PRJ-2024-001", name: "Website Redesign"},
@@ -545,6 +563,43 @@
             }
         }
 
+        // Admin login functions
+        function showAdminTab() {
+            if (isAdminLoggedIn) {
+                showTab('admin');
+            } else {
+                document.getElementById('adminLoginModal').style.display = 'flex';
+                document.getElementById('adminPassword').focus();
+            }
+        }
+
+        function verifyAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                closeAdminLogin();
+                showTab('admin');
+                // Clear password field for security
+                document.getElementById('adminPassword').value = '';
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('adminPassword').select();
+            }
+        }
+
+        function closeAdminLogin() {
+            document.getElementById('adminLoginModal').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        // Handle Enter key in password field
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyAdminPassword();
+            }
+        });
+
         // Tab functionality
         function showTab(tabName) {
             // Hide all tabs
@@ -557,7 +612,13 @@
 
             // Show selected tab
             document.getElementById(tabName + 'Tab').classList.add('active');
-            event.target.classList.add('active');
+            
+            // Update active button
+            if (tabName === 'admin') {
+                document.getElementById('adminTabBtn').classList.add('active');
+            } else {
+                document.querySelector('.tab-button').classList.add('active');
+            }
 
             if (tabName === 'admin') {
                 updateProjectList();
