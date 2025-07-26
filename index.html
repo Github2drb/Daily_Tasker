@@ -537,7 +537,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="employeeName">Employee Name <span class="required">*</span></label>
-                        <select id="employeeName" name="employeeName" required>
+                        <select id="employeeName" name="employeeName" required onchange="onEmployeeChange()">
                             <option value="">Select employee...</option>
                         </select>
                     </div>
@@ -752,7 +752,7 @@
                     console.log('Using default projects');
                 }
             }
-            updateProjectDropdown();
+            updateProjectDropdown(); // Load all projects initially
             updateProjectList();
         }
 
@@ -912,17 +912,55 @@
             });
         }
 
-        // Update project dropdown in the form
-        function updateProjectDropdown() {
+        // Update project dropdown based on selected employee
+        function updateProjectDropdown(selectedEmployee = null) {
             const select = document.getElementById('projectSelect');
             select.innerHTML = '<option value="">Choose a project...</option>';
             
-            projects.forEach((project, index) => {
+            let filteredProjects = projects;
+            
+            // Filter projects if an employee is selected
+            if (selectedEmployee) {
+                filteredProjects = projects.filter(project => 
+                    project.assignedEmployees && project.assignedEmployees.includes(selectedEmployee)
+                );
+            }
+            
+            filteredProjects.forEach((project, originalIndex) => {
                 const option = document.createElement('option');
-                option.value = index;
+                // Store the original index to maintain reference to the actual project
+                const actualIndex = projects.findIndex(p => p.number === project.number);
+                option.value = actualIndex;
                 option.textContent = `${project.number} - ${project.name}`;
                 select.appendChild(option);
             });
+
+            // Show message if no projects are assigned to the selected employee
+            if (selectedEmployee && filteredProjects.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "No projects assigned to this employee";
+                option.disabled = true;
+                select.appendChild(option);
+            }
+
+            // Clear project fields when filter changes
+            document.getElementById('selectedProjectNumber').value = '';
+            document.getElementById('selectedProjectName').value = '';
+        }
+
+        // Handle employee selection change
+        function onEmployeeChange() {
+            const employeeSelect = document.getElementById('employeeName');
+            const selectedEmployee = employeeSelect.value;
+            
+            // Update project dropdown based on selected employee
+            updateProjectDropdown(selectedEmployee);
+            
+            // Reset project selection
+            document.getElementById('projectSelect').value = '';
+            document.getElementById('selectedProjectNumber').value = '';
+            document.getElementById('selectedProjectName').value = '';
         }
 
         // Update project fields when selection changes
@@ -1115,7 +1153,7 @@
 
             projects.push({number, name, assignedEmployees});
             saveProjects();
-            updateProjectDropdown();
+            updateProjectDropdown(); // Refresh project dropdown
             updateProjectList();
 
             // Clear inputs
@@ -1158,7 +1196,7 @@
             projects[editingProjectIndex].assignedEmployees = assignedEmployees;
 
             saveProjects();
-            updateProjectDropdown();
+            updateProjectDropdown(); // Refresh project dropdown
             updateProjectList();
             closeEditProjectModal();
 
@@ -1176,7 +1214,7 @@
             if (confirm('Are you sure you want to delete this project?')) {
                 projects.splice(index, 1);
                 saveProjects();
-                updateProjectDropdown();
+                updateProjectDropdown(); // Refresh project dropdown
                 updateProjectList();
             }
         }
@@ -1241,7 +1279,7 @@
                 if (confirm(`Import ${imported.length} projects? This will replace existing projects.`)) {
                     projects = imported;
                     saveProjects();
-                    updateProjectDropdown();
+                    updateProjectDropdown(); // Refresh project dropdown
                     updateProjectList();
                     document.getElementById('importProjects').value = '';
                     alert('Projects imported successfully!');
@@ -1337,6 +1375,8 @@ Submitted on: ${new Date().toLocaleString()}
                 document.getElementById('customProjectFields').style.display = 'none';
                 document.getElementById('projectSelect').disabled = false;
                 document.getElementById('projectSelect').required = true;
+                // Reset project dropdown to show all projects
+                updateProjectDropdown();
             }, 3000);
         });
 
