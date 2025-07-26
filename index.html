@@ -336,6 +336,132 @@
             margin-bottom: 20px;
         }
 
+        .employee-assignment {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .employee-assignment h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .employee-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .employee-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e6ed;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .employee-checkbox-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .employee-checkbox-item input[type="checkbox"] {
+            margin: 0;
+            transform: scale(1.2);
+        }
+
+        .employee-checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .project-employees {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .project-employees .employee-tag {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            display: inline-block;
+            margin-bottom: 3px;
+        }
+
+        .edit-project-btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            padding: 8px 15px;
+            margin: 5px;
+            min-width: auto;
+            font-size: 0.9rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+
         .admin-section h3 {
             color: #2c3e50;
             margin-bottom: 15px;
@@ -367,6 +493,33 @@
                     <button onclick="closeAdminLogin()" style="background: #95a5a6; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
                 </div>
                 <div id="loginError" style="color: #e74c3c; margin-top: 15px; display: none;">Incorrect password. Please try again.</div>
+            </div>
+        </div>
+
+        <!-- Edit Project Modal -->
+        <div id="editProjectModal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Project</h2>
+                <div class="form-group">
+                    <label for="editProjectNumber">Project Number</label>
+                    <input type="text" id="editProjectNumber" readonly style="background: #e9ecef;">
+                </div>
+                <div class="form-group">
+                    <label for="editProjectName">Project Name</label>
+                    <input type="text" id="editProjectName">
+                </div>
+                
+                <div class="employee-assignment">
+                    <h4>Assign Employees to Project</h4>
+                    <div id="editProjectEmployees" class="employee-checkboxes">
+                        <!-- Employee checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="save-btn" onclick="saveProjectChanges()">Save Changes</button>
+                    <button class="cancel-btn" onclick="closeEditProjectModal()">Cancel</button>
+                </div>
             </div>
         </div>
 
@@ -522,6 +675,14 @@
                         <input type="text" id="newProjectName" placeholder="Enter project name">
                     </div>
                 </div>
+                
+                <div class="employee-assignment">
+                    <h4>Assign Employees to Project</h4>
+                    <div id="newProjectEmployees" class="employee-checkboxes">
+                        <!-- Employee checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
                 <button class="admin-btn" onclick="addProject()">Add Project</button>
             </div>
 
@@ -543,7 +704,7 @@
 
                 <div class="form-group">
                     <label for="importProjects">Import Projects (JSON format)</label>
-                    <textarea id="importProjects" placeholder='[{"number":"PRJ-001","name":"Project Alpha"},{"number":"PRJ-002","name":"Project Beta"}]'></textarea>
+                    <textarea id="importProjects" placeholder='[{"number":"PRJ-001","name":"Project Alpha","assignedEmployees":["John Smith","Jane Doe"]},{"number":"PRJ-002","name":"Project Beta","assignedEmployees":[]}]'></textarea>
                 </div>
                 <button class="admin-btn" onclick="importProjects()">Import Projects</button>
                 <button class="admin-btn" onclick="exportProjects()">Export Projects</button>
@@ -552,17 +713,20 @@
     </div>
 
     <script>
+        // Global variable to track which project is being edited
+        let editingProjectIndex = -1;
+
         // Admin password - Change this to your desired password
         const ADMIN_PASSWORD = "admin123";
         let isAdminLoggedIn = false;
 
         // Initialize with sample data
         let projects = [
-            {number: "PRJ-2024-001", name: "Website Redesign"},
-            {number: "PRJ-2024-002", name: "Mobile App Development"},
-            {number: "PRJ-2024-003", name: "Database Migration"},
-            {number: "PRJ-2024-004", name: "API Integration"},
-            {number: "PRJ-2024-005", name: "Security Audit"}
+            {number: "PRJ-2024-001", name: "Website Redesign", assignedEmployees: ["John Smith", "Sarah Johnson"]},
+            {number: "PRJ-2024-002", name: "Mobile App Development", assignedEmployees: ["Mike Wilson"]},
+            {number: "PRJ-2024-003", name: "Database Migration", assignedEmployees: ["Emily Davis", "David Brown"]},
+            {number: "PRJ-2024-004", name: "API Integration", assignedEmployees: ["John Smith"]},
+            {number: "PRJ-2024-005", name: "Security Audit", assignedEmployees: []}
         ];
 
         let employees = [
@@ -578,7 +742,12 @@
             const storedProjects = localStorage?.getItem('projects');
             if (storedProjects) {
                 try {
-                    projects = JSON.parse(storedProjects);
+                    const parsed = JSON.parse(storedProjects);
+                    // Ensure backward compatibility - add assignedEmployees if missing
+                    projects = parsed.map(project => ({
+                        ...project,
+                        assignedEmployees: project.assignedEmployees || []
+                    }));
                 } catch (e) {
                     console.log('Using default projects');
                 }
@@ -677,7 +846,57 @@
             if (tabName === 'admin') {
                 updateProjectList();
                 updateEmployeeList();
+                updateNewProjectEmployeeList();
             }
+        }
+
+        // Update new project employee checkboxes
+        function updateNewProjectEmployeeList() {
+            const container = document.getElementById('newProjectEmployees');
+            container.innerHTML = '';
+
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No employees available. Please add employees first.</p>';
+                return;
+            }
+
+            employees.forEach((employee, index) => {
+                const item = document.createElement('div');
+                item.className = 'employee-checkbox-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="newEmp_${index}" value="${employee}">
+                    <label for="newEmp_${index}">${employee}</label>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Update edit project employee checkboxes
+        function updateEditProjectEmployeeList(selectedEmployees = []) {
+            const container = document.getElementById('editProjectEmployees');
+            container.innerHTML = '';
+
+            if (employees.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No employees available. Please add employees first.</p>';
+                return;
+            }
+
+            employees.forEach((employee, index) => {
+                const isChecked = selectedEmployees.includes(employee);
+                const item = document.createElement('div');
+                item.className = 'employee-checkbox-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="editEmp_${index}" value="${employee}" ${isChecked ? 'checked' : ''}>
+                    <label for="editEmp_${index}">${employee}</label>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Get selected employees from checkboxes
+        function getSelectedEmployees(containerId) {
+            const checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
+            return Array.from(checkboxes).map(cb => cb.value);
         }
 
         // Update employee dropdown in the form
@@ -784,6 +1003,7 @@
             saveEmployees();
             updateEmployeeDropdown();
             updateEmployeeList();
+            updateNewProjectEmployeeList(); // Update project assignment checkboxes
 
             // Clear input
             document.getElementById('newEmployeeName').value = '';
@@ -798,6 +1018,7 @@
                 saveEmployees();
                 updateEmployeeDropdown();
                 updateEmployeeList();
+                updateNewProjectEmployeeList(); // Update project assignment checkboxes
             }
         }
 
@@ -850,6 +1071,7 @@
                     saveEmployees();
                     updateEmployeeDropdown();
                     updateEmployeeList();
+                    updateNewProjectEmployeeList(); // Update project assignment checkboxes
                     document.getElementById('importEmployees').value = '';
                     alert('Employees imported successfully!');
                 }
@@ -877,6 +1099,7 @@
         function addProject() {
             const number = document.getElementById('newProjectNumber').value.trim();
             const name = document.getElementById('newProjectName').value.trim();
+            const assignedEmployees = getSelectedEmployees('newProjectEmployees');
 
             if (!number || !name) {
                 alert('Please enter both project number and name');
@@ -890,7 +1113,7 @@
                 return;
             }
 
-            projects.push({number, name});
+            projects.push({number, name, assignedEmployees});
             saveProjects();
             updateProjectDropdown();
             updateProjectList();
@@ -898,8 +1121,54 @@
             // Clear inputs
             document.getElementById('newProjectNumber').value = '';
             document.getElementById('newProjectName').value = '';
+            
+            // Uncheck all employee checkboxes
+            document.querySelectorAll('#newProjectEmployees input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
 
             alert('Project added successfully!');
+        }
+
+        // Edit project
+        function editProject(index) {
+            editingProjectIndex = index;
+            const project = projects[index];
+            
+            document.getElementById('editProjectNumber').value = project.number;
+            document.getElementById('editProjectName').value = project.name;
+            
+            updateEditProjectEmployeeList(project.assignedEmployees || []);
+            document.getElementById('editProjectModal').style.display = 'flex';
+        }
+
+        // Save project changes
+        function saveProjectChanges() {
+            if (editingProjectIndex === -1) return;
+
+            const name = document.getElementById('editProjectName').value.trim();
+            const assignedEmployees = getSelectedEmployees('editProjectEmployees');
+
+            if (!name) {
+                alert('Please enter project name');
+                return;
+            }
+
+            projects[editingProjectIndex].name = name;
+            projects[editingProjectIndex].assignedEmployees = assignedEmployees;
+
+            saveProjects();
+            updateProjectDropdown();
+            updateProjectList();
+            closeEditProjectModal();
+
+            alert('Project updated successfully!');
+        }
+
+        // Close edit project modal
+        function closeEditProjectModal() {
+            document.getElementById('editProjectModal').style.display = 'none';
+            editingProjectIndex = -1;
         }
 
         // Delete project
@@ -923,14 +1192,22 @@
             }
 
             projects.forEach((project, index) => {
+                const assignedEmployeesHtml = project.assignedEmployees && project.assignedEmployees.length > 0 
+                    ? project.assignedEmployees.map(emp => `<span class="employee-tag">${emp}</span>`).join('')
+                    : '<span style="color: #999;">No employees assigned</span>';
+
                 const item = document.createElement('div');
                 item.className = 'project-item';
                 item.innerHTML = `
                     <div class="project-info">
                         <div class="project-number">${project.number}</div>
                         <div class="project-name">${project.name}</div>
+                        <div class="project-employees">${assignedEmployeesHtml}</div>
                     </div>
-                    <button class="admin-btn delete-btn" onclick="deleteProject(${index})">Delete</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="admin-btn edit-project-btn" onclick="editProject(${index})">Edit</button>
+                        <button class="admin-btn delete-btn" onclick="deleteProject(${index})">Delete</button>
+                    </div>
                 `;
                 container.appendChild(item);
             });
@@ -954,6 +1231,10 @@
                 imported.forEach((project, index) => {
                     if (!project.number || !project.name) {
                         throw new Error(`Invalid project at index ${index}: missing number or name`);
+                    }
+                    // Ensure assignedEmployees exists
+                    if (!project.assignedEmployees) {
+                        project.assignedEmployees = [];
                     }
                 });
 
@@ -1090,6 +1371,13 @@ Submitted on: ${new Date().toLocaleString()}
             element.addEventListener('blur', function() {
                 this.parentElement.querySelector('label').style.color = '#2c3e50';
             });
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('editProjectModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditProjectModal();
+            }
         });
 
         // Initialize the application
