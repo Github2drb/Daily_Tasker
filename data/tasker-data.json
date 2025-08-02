@@ -131,8 +131,16 @@
         "SANTHOSH  N",
         "SUSHANTH  K M"
       ]
+    },
+    {
+      "number": "3A-GB1-25024",
+      "name": "Coil soldering",
+      "employees": [
+        "SANTHOSH  N",
+        "MANIKANDAN  P"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T04:03:41.809Z"
+  "lastSync": "2025-08-02T04:04:06.855Z"
 }
