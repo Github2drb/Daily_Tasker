@@ -155,8 +155,16 @@
         "SANTHOSH  N",
         "PRAVEEN KUMAR C"
       ]
+    },
+    {
+      "number": "GB1-25062",
+      "name": "GE_Cold plate assembly station A",
+      "employees": [
+        "SANTHOSH  N",
+        "MANIKANDAN  P"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T04:04:57.711Z"
+  "lastSync": "2025-08-02T04:06:21.794Z"
 }
