@@ -87,8 +87,18 @@
         "SACHIN  N",
         "PRAKASH  N"
       ]
+    },
+    {
+      "number": "3W-UN1-25075",
+      "name": "R1324 Project Apron Part Robotic Spot Welding Fixtures",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T04:01:12.909Z"
+  "lastSync": "2025-08-02T04:01:42.063Z"
 }
