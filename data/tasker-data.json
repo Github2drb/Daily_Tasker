@@ -78,8 +78,17 @@
         "SACHIN  N",
         "PRAKASH  N"
       ]
+    },
+    {
+      "number": "3W-TT4-25073 TTIA",
+      "name": "EXISTING JIG POKA YOKE ADDITION 42021.2-KK050 & 42201- KK030",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T04:00:47.903Z"
+  "lastSync": "2025-08-02T04:01:12.909Z"
 }
