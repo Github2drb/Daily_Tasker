@@ -565,69 +565,52 @@
 
         // Form handling
         function onEmployeeChange() {
-            // This function can be used to filter projects based on employee
-            debugLog('Employee selection changed');
-        }
-
-        function updateProjectFields() {
             try {
+                const employeeSelect = document.getElementById('employeeName');
                 const projectSelect = document.getElementById('projectSelect');
-                const selectedValue = projectSelect.value;
+                const selectedEmployee = employeeSelect.value;
                 
-                if (selectedValue) {
-                    const project = JSON.parse(selectedValue);
-                    document.getElementById('selectedProjectNumber').value = project.number;
-                    document.getElementById('selectedProjectName').value = project.name;
-                    debugLog(`Selected project: ${project.number}`);
+                debugLog(`Employee selection changed to: ${selectedEmployee}`);
+                
+                // Clear current project selection
+                projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+                document.getElementById('selectedProjectNumber').value = '';
+                document.getElementById('selectedProjectName').value = '';
+                
+                if (selectedEmployee) {
+                    // Filter projects that include this employee
+                    const employeeProjects = projects.filter(project => 
+                        project.employees.includes(selectedEmployee)
+                    );
+                    
+                    debugLog(`Found ${employeeProjects.length} projects for ${selectedEmployee}`);
+                    
+                    employeeProjects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(project);
+                        option.textContent = `${project.number} - ${project.name}`;
+                        projectSelect.appendChild(option);
+                    });
+                    
+                    if (employeeProjects.length === 0) {
+                        const noProjectsOption = document.createElement('option');
+                        noProjectsOption.value = '';
+                        noProjectsOption.textContent = 'No projects assigned to this employee';
+                        noProjectsOption.disabled = true;
+                        noProjectsOption.style.color = '#999';
+                        projectSelect.appendChild(noProjectsOption);
+                    }
                 } else {
-                    document.getElementById('selectedProjectNumber').value = '';
-                    document.getElementById('selectedProjectName').value = '';
+                    // If no employee selected, show all projects
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(project);
+                        option.textContent = `${project.number} - ${project.name}`;
+                        projectSelect.appendChild(option);
+                    });
                 }
             } catch (error) {
-                debugLog(`Error in updateProjectFields: ${error.message}`);
-            }
-        }
-
-        function toggleCustomProject() {
-            try {
-                const customProject = document.getElementById('customProject');
-                const customProjectFields = document.getElementById('customProjectFields');
-                const projectSelect = document.getElementById('projectSelect');
-                const selectedProjectNumber = document.getElementById('selectedProjectNumber');
-                const selectedProjectName = document.getElementById('selectedProjectName');
-                
-                if (customProject.checked) {
-                    customProjectFields.style.display = 'block';
-                    projectSelect.disabled = true;
-                    projectSelect.required = false;
-                    selectedProjectNumber.readOnly = false;
-                    selectedProjectName.readOnly = false;
-                    selectedProjectNumber.style.background = '#f8f9fa';
-                    selectedProjectName.style.background = '#f8f9fa';
-                    
-                    // Clear project selection
-                    projectSelect.value = '';
-                    selectedProjectNumber.value = '';
-                    selectedProjectName.value = '';
-                    
-                    debugLog('Custom project mode enabled');
-                } else {
-                    customProjectFields.style.display = 'none';
-                    projectSelect.disabled = false;
-                    projectSelect.required = true;
-                    selectedProjectNumber.readOnly = true;
-                    selectedProjectName.readOnly = true;
-                    selectedProjectNumber.style.background = '#e9ecef';
-                    selectedProjectName.style.background = '#e9ecef';
-                    
-                    // Clear custom fields
-                    document.getElementById('customProjectNumber').value = '';
-                    document.getElementById('customProjectName').value = '';
-                    
-                    debugLog('Custom project mode disabled');
-                }
-            } catch (error) {
-                debugLog(`Error in toggleCustomProject: ${error.message}`);
+                debugLog(`Error in onEmployeeChange: ${error.message}`);
             }
         }
 
