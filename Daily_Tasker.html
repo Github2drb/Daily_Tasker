@@ -1,371 +1,4 @@
-    <script>
-        // Global variables
-        let employees = [];
-        let projects = [];
-        let reports = [];
-        let adminPassword = 'admin123';
-        let isAdminLoggedIn = false;
-        let currentEditingProject = null;
-
-        // GitHub configuration
-        let githubConfig = {
-            token: '',
-            repo: '',
-            branch: 'main',
-            path: 'data/tasker-data.json',
-            autoSync: false
-        };
-
-        // Debug function
-        function debugLog(message) {
-            const debugPanel = document.getElementById('debugPanel');
-            const debugInfo = document.getElementById('debugInfo');
-            if (debugPanel && debugInfo) {
-                debugInfo.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
-                debugPanel.scrollTop = debugPanel.scrollHeight;
-            }
-            console.log(`[Daily Tasker Debug] ${message}`);
-        }
-
-        // Safe localStorage operations
-        function safeGetFromStorage(key, defaultValue = null) {
-            try {
-                const item = localStorage.getItem(key);
-                return item ? JSON.parse(item) : defaultValue;
-            } catch (error) {
-                debugLog(`Error reading from localStorage (${key}): ${error.message}`);
-                return defaultValue;
-            }
-        }
-
-        function safeSetToStorage(key, value) {
-            try {
-                localStorage.setItem(key, JSON.stringify(value));
-                return true;
-            } catch (error) {
-                debugLog(`Error writing to localStorage (${key}): ${error.message}`);
-                return false;
-            }
-        }
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            try {
-                debugLog('Initializing Daily Tasker application...');
-                
-                // Load data from localStorage safely
-                employees = safeGetFromStorage('employees', []);
-                projects = safeGetFromStorage('projects', []);
-                reports = safeGetFromStorage('reports', []);
-                adminPassword = safeGetFromStorage('adminPassword', 'admin123');
-                githubConfig = safeGetFromStorage('githubConfig', {
-                    token: '',
-                    repo: '',
-                    branch: 'main',
-                    path: 'data/tasker-data.json',
-                    autoSync: false
-                });
-
-                debugLog(`Loaded: ${employees.length} employees, ${projects.length} projects, ${reports.length} reports`);
-                
-                // Set today's date
-                const dateInput = document.getElementById('date');
-                if (dateInput) {
-                    dateInput.valueAsDate = new Date();
-                }
-                
-                // Load data
-                loadEmployees();
-                loadProjects();
-                updateEmployeeCheckboxes();
-                
-                // Load GitHub config
-                loadGitHubConfig();
-                
-                // Add form submit handler
-                const taskForm = document.getElementById('taskForm');
-                if (taskForm) {
-                    taskForm.addEventListener('submit', handleFormSubmit);
-                }
-                
-                // Add support radio button handlers
-                document.querySelectorAll('input[name="needSupport"]').forEach(radio => {
-                    radio.addEventListener('change', function() {
-                        const supportDetails = document.getElementById('supportDetails');
-                        const supportDescription = document.getElementById('supportDescription');
-                        if (this.value === 'Yes') {
-                            supportDetails.style.display = 'block';
-                            if (supportDescription) supportDescription.required = true;
-                        } else {
-                            supportDetails.style.display = 'none';
-                            if (supportDescription) {
-                                supportDescription.required = false;
-                                supportDescription.value = '';
-                            }
-                        }
-                    });
-                });
-
-                // Add enter key handler for admin password
-                const adminPasswordInput = document.getElementById('adminPassword');
-                if (adminPasswordInput) {
-                    adminPasswordInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            verifyAdminPassword();
-                        }
-                    });
-                }
-
-                // Add debug panel toggle (Ctrl+D)
-                document.addEventListener('keydown', function(e) {
-                    if (e.ctrlKey && e.key === 'd') {
-                        e.preventDefault();
-                        const debugPanel = document.getElementById('debugPanel');
-                        if (debugPanel) {
-                            debugPanel.classList.toggle('show');
-                        }
-                    }
-                });
-
-                debugLog('Application initialized successfully');
-                
-            } catch (error) {
-                debugLog(`Initialization error: ${error.message}`);
-                console.error('Initialization error:', error);
-            }
-        });
-
-        // Tab management
-        function showTab(event, tabName) {
-            try {
-                // Hide all tab contents
-                document.querySelectorAll('.tab-content').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                
-                // Remove active class from all tab buttons
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // Show selected tab content
-                const tabContent = document.getElementById(tabName + 'Tab');
-                if (tabContent) {
-                    tabContent.classList.add('active');
-                }
-                
-                // Add active class to clicked tab button
-                if (event && event.target) {
-                    event.target.classList.add('active');
-                }
-                
-                debugLog(`Switched to tab: ${tabName}`);
-            } catch (error) {
-                debugLog(`Error in showTab: ${error.message}`);
-            }
-        }
-
-        function showAdminTab(event) {
-            try {
-                if (!isAdminLoggedIn) {
-                    document.getElementById('adminLoginModal').style.display = 'flex';
-                    return;
-                }
-                showTab(event, 'admin');
-                updateEmployeeCheckboxes();
-                debugLog('Admin tab accessed');
-            } catch (error) {
-                debugLog(`Error in showAdminTab: ${error.message}`);
-            }
-        }
-
-        // Admin authentication
-        function verifyAdminPassword() {
-            try {
-                const enteredPassword = document.getElementById('adminPassword').value;
-                if (enteredPassword === adminPassword) {
-                    isAdminLoggedIn = true;
-                    closeAdminLogin();
-                    showTab(null, 'admin');
-                    updateEmployeeCheckboxes();
-                    debugLog('Admin login successful');
-                } else {
-                    document.getElementById('loginError').style.display = 'block';
-                    document.getElementById('adminPassword').value = '';
-                    debugLog('Admin login failed');
-                }
-            } catch (error) {
-                debugLog(`Error in verifyAdminPassword: ${error.message}`);
-            }
-        }
-
-        function closeAdminLogin() {
-            try {
-                document.getElementById('adminLoginModal').style.display = 'none';
-                document.getElementById('adminPassword').value = '';
-                document.getElementById('loginError').style.display = 'none';
-            } catch (error) {
-                debugLog(`Error in closeAdminLogin: ${error.message}`);
-            }
-        }
-
-        // Employee management
-        function loadEmployees() {
-            try {
-                const employeeSelect = document.getElementById('employeeName');
-                if (!employeeSelect) {
-                    debugLog('Employee select element not found');
-                    return;
-                }
-                
-                employeeSelect.innerHTML = '<option value="">Select employee...</option>';
-                
-                employees.forEach(employee => {
-                    const option = document.createElement('option');
-                    option.value = employee;
-                    option.textContent = employee;
-                    employeeSelect.appendChild(option);
-                });
-                
-                updateEmployeeList();
-                debugLog(`Loaded ${employees.length} employees into dropdown`);
-            } catch (error) {
-                debugLog(`Error in loadEmployees: ${error.message}`);
-            }
-        }
-
-        function addEmployee() {
-            try {
-                const newEmployeeInput = document.getElementById('newEmployeeName');
-                if (!newEmployeeInput) {
-                    debugLog('New employee input not found');
-                    return;
-                }
-                
-                const newEmployeeName = newEmployeeInput.value.trim();
-                if (newEmployeeName && !employees.includes(newEmployeeName)) {
-                    employees.push(newEmployeeName);
-                    safeSetToStorage('employees', employees);
-                    loadEmployees();
-                    updateEmployeeCheckboxes();
-                    newEmployeeInput.value = '';
-                    
-                    debugLog(`Added employee: ${newEmployeeName}`);
-                    
-                    if (githubConfig.autoSync) {
-                        syncToGitHub();
-                    }
-                } else if (employees.includes(newEmployeeName)) {
-                    showMessage('error', 'Employee already exists');
-                }
-            } catch (error) {
-                debugLog(`Error in addEmployee: ${error.message}`);
-            }
-        }
-
-        function removeEmployee(employeeName) {
-            try {
-                if (confirm(`Are you sure you want to remove ${employeeName}?`)) {
-                    employees = employees.filter(emp => emp !== employeeName);
-                    safeSetToStorage('employees', employees);
-                    loadEmployees();
-                    updateEmployeeCheckboxes();
-                    
-                    debugLog(`Removed employee: ${employeeName}`);
-                    
-                    if (githubConfig.autoSync) {
-                        syncToGitHub();
-                    }
-                }
-            } catch (error) {
-                debugLog(`Error in removeEmployee: ${error.message}`);
-            }
-        }
-
-        function updateEmployeeList() {
-            try {
-                const employeeList = document.getElementById('employeeList');
-                if (!employeeList) return;
-                
-                employeeList.innerHTML = '';
-                
-                employees.forEach(employee => {
-                    const employeeItem = document.createElement('div');
-                    employeeItem.className = 'employee-item';
-                    employeeItem.innerHTML = `
-                        <span>${employee}</span>
-                        <button class="admin-btn delete-btn" onclick="removeEmployee('${employee.replace(/'/g, "\\'")}')">Remove</button>
-                    `;
-                    employeeList.appendChild(employeeItem);
-                });
-                
-                debugLog(`Updated employee list with ${employees.length} employees`);
-            } catch (error) {
-                debugLog(`Error in updateEmployeeList: ${error.message}`);
-            }
-        }
-
-        // Project management
-        function loadProjects() {
-            try {
-                const projectSelect = document.getElementById('projectSelect');
-                if (!projectSelect) {
-                    debugLog('Project select element not found');
-                    return;
-                }
-                
-                projectSelect.innerHTML = '<option value="">Choose a project...</option>';
-                
-                projects.forEach(project => {
-                    const option = document.createElement('option');
-                    option.value = JSON.stringify(project);
-                    option.textContent = `${project.number} - ${project.name}`;
-                    projectSelect.appendChild(option);
-                });
-                
-                updateProjectList();
-                debugLog(`Loaded ${projects.length} projects into dropdown`);
-            } catch (error) {
-                debugLog(`Error in loadProjects: ${error.message}`);
-            }
-        }
-
-        function addProject() {
-            try {
-                const projectNumber = document.getElementById('newProjectNumber').value.trim();
-                const projectName = document.getElementById('newProjectName').value.trim();
-                
-                if (!projectNumber || !projectName) {
-                    showMessage('error', 'Please enter both project number and name.');
-                    return;
-                }
-                
-                // Check if project number already exists
-                if (projects.some(p => p.number === projectNumber)) {
-                    showMessage('error', 'Project number already exists. Please use a different number.');
-                    return;
-                }
-                
-                // Get selected employees
-                const selectedEmployees = [];
-                document.querySelectorAll('#projectEmployees input[type="checkbox"]:checked').forEach(checkbox => {
-                    selectedEmployees.push(checkbox.value);
-                });
-                
-                const newProject = {
-                    number: projectNumber,
-                    name: projectName,
-                    employees: selectedEmployees
-                };
-                
-                projects.push(newProject);
-                safeSetToStorage('projects', projects);
-                loadProjects();
-                
-                // Clear form
-                document.getElementById('newProjectNumber').value = '';
-                document.getElementById('newProjectName').value = '';
-                document.querySelectorAll('#projectEmployees input[type="checkbox"]').forEach(checkbox => {<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -942,33 +575,9 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-
-        .debug-panel {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            max-width: 300px;
-            z-index: 9999;
-            display: none;
-        }
-
-        .debug-panel.show {
-            display: block;
-        }
     </style>
 </head>
 <body>
-    <!-- Debug Panel -->
-    <div id="debugPanel" class="debug-panel">
-        <h4>Debug Info:</h4>
-        <div id="debugInfo"></div>
-    </div>
-
     <div class="container">
         <div class="header">
             <div class="sync-status" id="syncStatus">
@@ -980,9 +589,9 @@
         </div>
         
         <div class="tab-container">
-            <button class="tab-button active" onclick="showTab(event, 'report')">Task Report</button>
-            <button class="tab-button" id="adminTabBtn" onclick="showAdminTab(event)">Manage Projects</button>
-            <button class="tab-button" onclick="showTab(event, 'sync')">GitHub Sync</button>
+            <button class="tab-button active" onclick="showTab('report')">Task Report</button>
+            <button class="tab-button" id="adminTabBtn" onclick="showAdminTab()">Manage Projects</button>
+            <button class="tab-button" onclick="showTab('sync')">GitHub Sync</button>
         </div>
 
         <!-- GitHub Sync Tab -->
@@ -1052,8 +661,8 @@
         </div>
 
         <!-- Admin Login Modal -->
-        <div id="adminLoginModal" class="modal">
-            <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div id="adminLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 40px; border-radius: 20px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
                 <h2 style="color: #2c3e50; margin-bottom: 20px;">Admin Access Required</h2>
                 <p style="color: #666; margin-bottom: 30px;">Enter admin password to manage projects</p>
                 <input type="password" id="adminPassword" placeholder="Enter admin password" style="width: 100%; padding: 15px; border: 2px solid #e0e6ed; border-radius: 12px; font-size: 1rem; margin-bottom: 20px;">
@@ -1278,3 +887,786 @@
     </div>
 
     <script>
+        // Global variables
+        let employees = JSON.parse(localStorage.getItem('employees')) || [];
+        let projects = JSON.parse(localStorage.getItem('projects')) || [];
+        let reports = JSON.parse(localStorage.getItem('reports')) || [];
+        let adminPassword = localStorage.getItem('adminPassword') || 'admin123';
+        let isAdminLoggedIn = false;
+        let currentEditingProject = null;
+
+        // GitHub configuration
+        let githubConfig = JSON.parse(localStorage.getItem('githubConfig')) || {
+            token: '',
+            repo: '',
+            branch: 'main',
+            path: 'data/tasker-data.json',
+            autoSync: false
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today's date
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // Load data
+            loadEmployees();
+            loadProjects();
+            updateEmployeeCheckboxes();
+            
+            // Load GitHub config
+            loadGitHubConfig();
+            
+            // Add form submit handler
+            document.getElementById('taskForm').addEventListener('submit', handleFormSubmit);
+            
+            // Add support radio button handlers
+            document.querySelectorAll('input[name="needSupport"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const supportDetails = document.getElementById('supportDetails');
+                    if (this.value === 'Yes') {
+                        supportDetails.style.display = 'block';
+                        document.getElementById('supportDescription').required = true;
+                    } else {
+                        supportDetails.style.display = 'none';
+                        document.getElementById('supportDescription').required = false;
+                        document.getElementById('supportDescription').value = '';
+                    }
+                });
+            });
+
+            // Add enter key handler for admin password
+            document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    verifyAdminPassword();
+                }
+            });
+        });
+
+        // Tab management
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Add active class to clicked tab button
+            event.target.classList.add('active');
+        }
+
+        function showAdminTab() {
+            if (!isAdminLoggedIn) {
+                document.getElementById('adminLoginModal').style.display = 'flex';
+                return;
+            }
+            showTab('admin');
+        }
+
+        // Admin authentication
+        function verifyAdminPassword() {
+            const enteredPassword = document.getElementById('adminPassword').value;
+            if (enteredPassword === adminPassword) {
+                isAdminLoggedIn = true;
+                closeAdminLogin();
+                showTab('admin');
+                updateEmployeeCheckboxes();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+
+        function closeAdminLogin() {
+            document.getElementById('adminLoginModal').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        // Employee management
+        function loadEmployees() {
+            const employeeSelect = document.getElementById('employeeName');
+            employeeSelect.innerHTML = '<option value="">Select employee...</option>';
+            
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee;
+                option.textContent = employee;
+                employeeSelect.appendChild(option);
+            });
+            
+            updateEmployeeList();
+        }
+
+        function addEmployee() {
+            const newEmployeeName = document.getElementById('newEmployeeName').value.trim();
+            if (newEmployeeName && !employees.includes(newEmployeeName)) {
+                employees.push(newEmployeeName);
+                localStorage.setItem('employees', JSON.stringify(employees));
+                loadEmployees();
+                updateEmployeeCheckboxes();
+                document.getElementById('newEmployeeName').value = '';
+                
+                if (githubConfig.autoSync) {
+                    syncToGitHub();
+                }
+            }
+        }
+
+        function removeEmployee(employeeName) {
+            if (confirm(`Are you sure you want to remove ${employeeName}?`)) {
+                employees = employees.filter(emp => emp !== employeeName);
+                localStorage.setItem('employees', JSON.stringify(employees));
+                loadEmployees();
+                updateEmployeeCheckboxes();
+                
+                if (githubConfig.autoSync) {
+                    syncToGitHub();
+                }
+            }
+        }
+
+        function updateEmployeeList() {
+            const employeeList = document.getElementById('employeeList');
+            if (!employeeList) return;
+            
+            employeeList.innerHTML = '';
+            
+            employees.forEach(employee => {
+                const employeeItem = document.createElement('div');
+                employeeItem.className = 'employee-item';
+                employeeItem.innerHTML = `
+                    <span>${employee}</span>
+                    <button class="admin-btn delete-btn" onclick="removeEmployee('${employee}')">Remove</button>
+                `;
+                employeeList.appendChild(employeeItem);
+            });
+        }
+
+        // Project management
+        function loadProjects() {
+            const projectSelect = document.getElementById('projectSelect');
+            projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+            
+            projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify(project);
+                option.textContent = `${project.number} - ${project.name}`;
+                projectSelect.appendChild(option);
+            });
+            
+            updateProjectList();
+        }
+
+        function addProject() {
+            const projectNumber = document.getElementById('newProjectNumber').value.trim();
+            const projectName = document.getElementById('newProjectName').value.trim();
+            
+            if (!projectNumber || !projectName) {
+                alert('Please enter both project number and name.');
+                return;
+            }
+            
+            // Check if project number already exists
+            if (projects.some(p => p.number === projectNumber)) {
+                alert('Project number already exists. Please use a different number.');
+                return;
+            }
+            
+            // Get selected employees
+            const selectedEmployees = [];
+            document.querySelectorAll('#projectEmployees input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedEmployees.push(checkbox.value);
+            });
+            
+            const newProject = {
+                number: projectNumber,
+                name: projectName,
+                employees: selectedEmployees
+            };
+            
+            projects.push(newProject);
+            localStorage.setItem('projects', JSON.stringify(projects));
+            loadProjects();
+            
+            // Clear form
+            document.getElementById('newProjectNumber').value = '';
+            document.getElementById('newProjectName').value = '';
+            document.querySelectorAll('#projectEmployees input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            if (githubConfig.autoSync) {
+                syncToGitHub();
+            }
+        }
+
+        function removeProject(projectNumber) {
+            if (confirm(`Are you sure you want to remove project ${projectNumber}?`)) {
+                projects = projects.filter(p => p.number !== projectNumber);
+                localStorage.setItem('projects', JSON.stringify(projects));
+                loadProjects();
+                
+                if (githubConfig.autoSync) {
+                    syncToGitHub();
+                }
+            }
+        }
+
+        function editProject(projectNumber) {
+            const project = projects.find(p => p.number === projectNumber);
+            if (!project) return;
+            
+            currentEditingProject = project;
+            
+            document.getElementById('editProjectNumber').value = project.number;
+            document.getElementById('editProjectName').value = project.name;
+            
+            // Load employee checkboxes for editing
+            const editEmployeesContainer = document.getElementById('editProjectEmployees');
+            editEmployeesContainer.innerHTML = '';
+            
+            employees.forEach(employee => {
+                const checkboxItem = document.createElement('div');
+                checkboxItem.className = 'employee-checkbox-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `edit_emp_${employee}`;
+                checkbox.value = employee;
+                checkbox.checked = project.employees.includes(employee);
+                
+                const label = document.createElement('label');
+                label.htmlFor = `edit_emp_${employee}`;
+                label.textContent = employee;
+                
+                checkboxItem.appendChild(checkbox);
+                checkboxItem.appendChild(label);
+                editEmployeesContainer.appendChild(checkboxItem);
+            });
+            
+            document.getElementById('editProjectModal').style.display = 'flex';
+        }
+
+        function saveProjectChanges() {
+            if (!currentEditingProject) return;
+            
+            const newName = document.getElementById('editProjectName').value.trim();
+            if (!newName) {
+                alert('Please enter a project name.');
+                return;
+            }
+            
+            // Get selected employees
+            const selectedEmployees = [];
+            document.querySelectorAll('#editProjectEmployees input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedEmployees.push(checkbox.value);
+            });
+            
+            // Update the project
+            const projectIndex = projects.findIndex(p => p.number === currentEditingProject.number);
+            if (projectIndex !== -1) {
+                projects[projectIndex].name = newName;
+                projects[projectIndex].employees = selectedEmployees;
+                
+                localStorage.setItem('projects', JSON.stringify(projects));
+                loadProjects();
+                closeEditProjectModal();
+                
+                if (githubConfig.autoSync) {
+                    syncToGitHub();
+                }
+            }
+        }
+
+        function closeEditProjectModal() {
+            document.getElementById('editProjectModal').style.display = 'none';
+            currentEditingProject = null;
+        }
+
+        function updateProjectList() {
+            const projectList = document.getElementById('projectList');
+            if (!projectList) return;
+            
+            projectList.innerHTML = '';
+            
+            projects.forEach(project => {
+                const projectItem = document.createElement('div');
+                projectItem.className = 'project-item';
+                
+                const employeeTagsHtml = project.employees.map(emp => 
+                    `<span class="employee-tag">${emp}</span>`
+                ).join('');
+                
+                projectItem.innerHTML = `
+                    <div class="project-info">
+                        <div class="project-number">${project.number}</div>
+                        <div class="project-name">${project.name}</div>
+                        <div class="project-employees">${employeeTagsHtml}</div>
+                    </div>
+                    <div>
+                        <button class="admin-btn edit-project-btn" onclick="editProject('${project.number}')">Edit</button>
+                        <button class="admin-btn delete-btn" onclick="removeProject('${project.number}')">Remove</button>
+                    </div>
+                `;
+                projectList.appendChild(projectItem);
+            });
+        }
+
+        function updateEmployeeCheckboxes() {
+            const containers = ['projectEmployees', 'editProjectEmployees'];
+            
+            containers.forEach(containerId => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                employees.forEach(employee => {
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'employee-checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `${containerId}_${employee}`;
+                    checkbox.value = employee;
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `${containerId}_${employee}`;
+                    label.textContent = employee;
+                    
+                    checkboxItem.appendChild(checkbox);
+                    checkboxItem.appendChild(label);
+                    container.appendChild(checkboxItem);
+                });
+            });
+        }
+
+        // Form handling
+        function onEmployeeChange() {
+            // This function can be used to filter projects based on employee
+        }
+
+        function updateProjectFields() {
+            const projectSelect = document.getElementById('projectSelect');
+            const selectedValue = projectSelect.value;
+            
+            if (selectedValue) {
+                const project = JSON.parse(selectedValue);
+                document.getElementById('selectedProjectNumber').value = project.number;
+                document.getElementById('selectedProjectName').value = project.name;
+            } else {
+                document.getElementById('selectedProjectNumber').value = '';
+                document.getElementById('selectedProjectName').value = '';
+            }
+        }
+
+        function toggleCustomProject() {
+            const customProject = document.getElementById('customProject');
+            const customProjectFields = document.getElementById('customProjectFields');
+            const projectSelect = document.getElementById('projectSelect');
+            const selectedProjectNumber = document.getElementById('selectedProjectNumber');
+            const selectedProjectName = document.getElementById('selectedProjectName');
+            
+            if (customProject.checked) {
+                customProjectFields.style.display = 'block';
+                projectSelect.disabled = true;
+                projectSelect.required = false;
+                selectedProjectNumber.readOnly = false;
+                selectedProjectName.readOnly = false;
+                selectedProjectNumber.style.background = '#f8f9fa';
+                selectedProjectName.style.background = '#f8f9fa';
+                
+                // Clear project selection
+                projectSelect.value = '';
+                selectedProjectNumber.value = '';
+                selectedProjectName.value = '';
+            } else {
+                customProjectFields.style.display = 'none';
+                projectSelect.disabled = false;
+                projectSelect.required = true;
+                selectedProjectNumber.readOnly = true;
+                selectedProjectName.readOnly = true;
+                selectedProjectNumber.style.background = '#e9ecef';
+                selectedProjectName.style.background = '#e9ecef';
+                
+                // Clear custom fields
+                document.getElementById('customProjectNumber').value = '';
+                document.getElementById('customProjectName').value = '';
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Handle custom project
+            const customProject = document.getElementById('customProject').checked;
+            if (customProject) {
+                data.selectedProjectNumber = document.getElementById('customProjectNumber').value;
+                data.selectedProjectName = document.getElementById('customProjectName').value;
+            }
+            
+            // Validate required fields
+            if (!data.employeeName || !data.date || !data.selectedProjectNumber || !data.selectedProjectName || !data.daysRequired || !data.needSupport) {
+                showMessage('error', 'Please fill in all required fields.');
+                return;
+            }
+            
+            // Add timestamp
+            data.timestamp = new Date().toISOString();
+            data.id = Date.now();
+            
+            // Save report
+            reports.push(data);
+            localStorage.setItem('reports', JSON.stringify(reports));
+            
+            // Show success message
+            showMessage('success', 'Your task report has been submitted successfully!');
+            
+            // Reset form
+            e.target.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('supportDetails').style.display = 'none';
+            document.getElementById('customProjectFields').style.display = 'none';
+            document.getElementById('projectSelect').disabled = false;
+            document.getElementById('projectSelect').required = true;
+            document.getElementById('selectedProjectNumber').readOnly = true;
+            document.getElementById('selectedProjectName').readOnly = true;
+            
+            if (githubConfig.autoSync) {
+                syncToGitHub();
+            }
+        }
+
+        function showMessage(type, message) {
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (type === 'success') {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+            } else {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Admin functions
+        function changeAdminPassword() {
+            const newPassword = document.getElementById('changeAdminPassword').value.trim();
+            if (newPassword) {
+                adminPassword = newPassword;
+                localStorage.setItem('adminPassword', adminPassword);
+                document.getElementById('changeAdminPassword').value = '';
+                showMessage('success', 'Admin password updated successfully!');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function exportData() {
+            const data = {
+                employees: employees,
+                projects: projects,
+                reports: reports,
+                adminPassword: adminPassword,
+                githubConfig: githubConfig,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `daily-tasker-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const file = document.getElementById('importDataFile').files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (data.employees) employees = data.employees;
+                    if (data.projects) projects = data.projects;
+                    if (data.reports) reports = data.reports;
+                    if (data.adminPassword) adminPassword = data.adminPassword;
+                    if (data.githubConfig) githubConfig = data.githubConfig;
+                    
+                    // Save to localStorage
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    localStorage.setItem('projects', JSON.stringify(projects));
+                    localStorage.setItem('reports', JSON.stringify(reports));
+                    localStorage.setItem('adminPassword', adminPassword);
+                    localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
+                    
+                    // Reload interface
+                    loadEmployees();
+                    loadProjects();
+                    updateEmployeeCheckboxes();
+                    loadGitHubConfig();
+                    
+                    showMessage('success', 'Data imported successfully!');
+                } catch (error) {
+                    showMessage('error', 'Error importing data. Please check the file format.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // GitHub sync functions
+        function loadGitHubConfig() {
+            document.getElementById('githubToken').value = githubConfig.token;
+            document.getElementById('githubRepo').value = githubConfig.repo;
+            document.getElementById('githubBranch').value = githubConfig.branch;
+            document.getElementById('githubPath').value = githubConfig.path;
+            document.getElementById('autoSync').checked = githubConfig.autoSync;
+            
+            updateSyncStatus();
+        }
+
+        function saveGitHubConfig() {
+            githubConfig = {
+                token: document.getElementById('githubToken').value.trim(),
+                repo: document.getElementById('githubRepo').value.trim(),
+                branch: document.getElementById('githubBranch').value.trim() || 'main',
+                path: document.getElementById('githubPath').value.trim() || 'data/tasker-data.json',
+                autoSync: document.getElementById('autoSync').checked
+            };
+            
+            localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
+        }
+
+        function updateSyncStatus() {
+            const syncStatus = document.getElementById('syncStatus');
+            const statusIndicator = syncStatus.querySelector('.status-indicator');
+            
+            if (githubConfig.token && githubConfig.repo) {
+                statusIndicator.className = 'status-indicator status-connected';
+                syncStatus.innerHTML = '<span class="status-indicator status-connected"></span>Connected';
+                syncStatus.className = 'sync-status sync-connected';
+            } else {
+                statusIndicator.className = 'status-indicator status-disconnected';
+                syncStatus.innerHTML = '<span class="status-indicator status-disconnected"></span>Not Connected';
+                syncStatus.className = 'sync-status sync-disconnected';
+            }
+        }
+
+        function logSync(message) {
+            const syncLog = document.getElementById('syncLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            syncLog.appendChild(logEntry);
+            syncLog.scrollTop = syncLog.scrollHeight;
+        }
+
+        async function testGitHubConnection() {
+            saveGitHubConfig();
+            
+            if (!githubConfig.token || !githubConfig.repo) {
+                logSync('❌ Please configure GitHub token and repository');
+                return;
+            }
+            
+            try {
+                logSync('🔄 Testing GitHub connection...');
+                
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}`, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    logSync('✅ GitHub connection successful!');
+                    updateSyncStatus();
+                } else {
+                    logSync(`❌ GitHub connection failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                logSync(`❌ Connection error: ${error.message}`);
+            }
+        }
+
+        async function syncToGitHub() {
+            saveGitHubConfig();
+            
+            if (!githubConfig.token || !githubConfig.repo) {
+                logSync('❌ GitHub not configured');
+                return;
+            }
+            
+            try {
+                logSync('🔄 Syncing data to GitHub...');
+                
+                const data = {
+                    employees: employees,
+                    projects: projects,
+                    reports: reports,
+                    lastSync: new Date().toISOString()
+                };
+                
+                // Get current file (to get SHA for update)
+                let sha = null;
+                try {
+                    const getResponse = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/${githubConfig.path}`, {
+                        headers: {
+                            'Authorization': `token ${githubConfig.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (getResponse.ok) {
+                        const fileData = await getResponse.json();
+                        sha = fileData.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist, will create new
+                }
+                
+                // Create or update file
+                const updateData = {
+                    message: `Update tasker data - ${new Date().toISOString()}`,
+                    content: btoa(JSON.stringify(data, null, 2)),
+                    branch: githubConfig.branch
+                };
+                
+                if (sha) {
+                    updateData.sha = sha;
+                }
+                
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/${githubConfig.path}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (response.ok) {
+                    logSync('✅ Data synced to GitHub successfully!');
+                } else {
+                    const errorData = await response.json();
+                    logSync(`❌ Sync failed: ${errorData.message}`);
+                }
+            } catch (error) {
+                logSync(`❌ Sync error: ${error.message}`);
+            }
+        }
+
+        async function syncFromGitHub() {
+            saveGitHubConfig();
+            
+            if (!githubConfig.token || !githubConfig.repo) {
+                logSync('❌ GitHub not configured');
+                return;
+            }
+            
+            try {
+                logSync('🔄 Syncing data from GitHub...');
+                
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/${githubConfig.path}`, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const fileData = await response.json();
+                    const content = atob(fileData.content);
+                    const data = JSON.parse(content);
+                    
+                    if (data.employees) {
+                        employees = data.employees;
+                        localStorage.setItem('employees', JSON.stringify(employees));
+                    }
+                    
+                    if (data.projects) {
+                        projects = data.projects;
+                        localStorage.setItem('projects', JSON.stringify(projects));
+                    }
+                    
+                    if (data.reports) {
+                        reports = data.reports;
+                        localStorage.setItem('reports', JSON.stringify(reports));
+                    }
+                    
+                    // Reload interface
+                    loadEmployees();
+                    loadProjects();
+                    updateEmployeeCheckboxes();
+                    
+                    logSync('✅ Data synced from GitHub successfully!');
+                } else {
+                    logSync(`❌ Sync failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                logSync(`❌ Sync error: ${error.message}`);
+            }
+        }
+
+        function toggleAutoSync() {
+            saveGitHubConfig();
+            updateSyncStatus();
+            
+            if (githubConfig.autoSync) {
+                logSync('✅ Auto-sync enabled');
+            } else {
+                logSync('ℹ️ Auto-sync disabled');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const adminModal = document.getElementById('adminLoginModal');
+            const editModal = document.getElementById('editProjectModal');
+            
+            if (event.target === adminModal) {
+                closeAdminLogin();
+            }
+            
+            if (event.target === editModal) {
+                closeEditProjectModal();
+            }
+        }
+    </script>
+</body>
+</html>
