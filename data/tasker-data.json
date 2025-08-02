@@ -50,8 +50,18 @@
         "SACHIN  N",
         "PRAKASH  N"
       ]
+    },
+    {
+      "number": "3W-SA1-25067 & 3W-SA1-25078(R1J1)",
+      "name": "YFG Project Outer Plate Robotic Mig Welding Line",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T03:59:24.781Z"
+  "lastSync": "2025-08-02T03:59:53.655Z"
 }
