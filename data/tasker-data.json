@@ -97,8 +97,18 @@
         "PRAKASH  N",
         "VEERESH  M"
       ]
+    },
+    {
+      "number": "3W-SA1-25047",
+      "name": "Welding Fixture 14300-76T80 Stage-02 Jig sensor addition",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T04:01:42.063Z"
+  "lastSync": "2025-08-02T04:02:07.765Z"
 }
