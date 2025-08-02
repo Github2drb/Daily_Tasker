@@ -13,7 +13,18 @@
     "SUSHANTH  K M",
     "VEERESH  M"
   ],
-  "projects": [],
+  "projects": [
+    {
+      "number": "3W2401",
+      "name": "560B Project MRA Roof spot welding line TKM",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "DEEKSHITHA  H C"
+      ]
+    }
+  ],
   "reports": [],
-  "lastSync": "2025-08-02T03:56:31.744Z"
+  "lastSync": "2025-08-02T03:57:03.727Z"
 }
