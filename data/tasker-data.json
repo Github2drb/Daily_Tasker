@@ -107,8 +107,16 @@
         "PRAKASH  N",
         "VEERESH  M"
       ]
+    },
+    {
+      "number": "PA23",
+      "name": "Panel Assembly line Automation (PA23)",
+      "employees": [
+        "SANTHOSH  N",
+        "PRAVEEN KUMAR C"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T04:02:07.765Z"
+  "lastSync": "2025-08-02T04:02:47.950Z"
 }
