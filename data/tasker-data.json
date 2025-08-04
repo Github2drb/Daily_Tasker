@@ -171,8 +171,18 @@
         "SANTHOSH  N",
         "DYUMITH N V"
       ]
+    },
+    {
+      "number": "3A-TE1-25029",
+      "name": "SIM R Angle",
+      "employees": [
+        "SANTHOSH  N",
+        "DYUMITH N V",
+        "SUSHANTH  K M",
+        "VEERESH  M"
+      ]
     }
   ],
   "reports": [],
-  "lastSync": "2025-08-02T22:48:34.573Z"
+  "lastSync": "2025-08-04T08:26:06.418Z"
 }
