@@ -183,6 +183,24 @@
       ]
     }
   ],
-  "reports": [],
-  "lastSync": "2025-08-04T08:31:19.562Z"
+  "reports": [
+    {
+      "employeeName": "DYUMITH N V",
+      "date": "2025-08-04",
+      "projectSelect": "{\"number\":\"3A-TE1-25029\",\"name\":\"SIM R Angle\",\"employees\":[\"SANTHOSH  N\",\"DYUMITH N V\",\"SUSHANTH  K M\",\"VEERESH  M\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A-TE1-25029",
+      "selectedProjectName": "SIM R Angle",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "SIMR| Angle Trials Taken.CSV shared with NOVA",
+      "progress": "Nearly Complete",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-04T13:35:07.954Z",
+      "id": 1754314507954
+    }
+  ],
+  "lastSync": "2025-08-04T13:35:07.960Z"
 }
