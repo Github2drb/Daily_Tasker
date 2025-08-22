@@ -218,7 +218,24 @@
       "supportDescription": "",
       "timestamp": "2025-08-06T12:49:38.163Z",
       "id": 1754484578163
+    },
+    {
+      "employeeName": "SACHIN  N",
+      "date": "2025-08-22",
+      "projectSelect": "{\"number\":\"3W2401\",\"name\":\"560B Project MRA Roof spot welding line TKM\",\"employees\":[\"RAJESH  R\",\"SACHIN  N\",\"PRAKASH  N\",\"DEEKSHITHA  H C\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3W2401",
+      "selectedProjectName": "560B Project MRA Roof spot welding line TKM",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "TKM Labelling, Coordinating with mechanical team, Sangwoo project technical discussion",
+      "progress": "In Progress",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-22T15:34:21.607Z",
+      "id": 1755876861607
     }
   ],
-  "lastSync": "2025-08-18T11:05:38.464Z"
+  "lastSync": "2025-08-22T16:29:52.447Z"
 }
