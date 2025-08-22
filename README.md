@@ -1,2 +1,2 @@
 # Daily_Tasker
-Update your Daily Activity here
+View Activities History Loaded and calender view is removed.
