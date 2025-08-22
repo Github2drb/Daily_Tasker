@@ -1,0 +1,2725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Tasker - Team Task Management (GitHub Sync)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sync-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            z-index: 3;
+        }
+
+        .sync-connected {
+            background: rgba(39, 174, 96, 0.8);
+            color: white;
+        }
+
+        .sync-disconnected {
+            background: rgba(231, 76, 60, 0.8);
+            color: white;
+        }
+
+        .sync-syncing {
+            background: rgba(241, 196, 15, 0.8);
+            color: white;
+        }
+
+        .tab-container {
+            display: flex;
+            background: rgba(0,0,0,0.05);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-button:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        input:hover, select:hover, textarea:hover {
+            border-color: #bbb;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="checkbox"], input[type="radio"] {
+            width: auto;
+            margin: 0;
+            transform: scale(1.3);
+            accent-color: #667eea;
+        }
+
+        .submit-btn, .admin-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 30px auto 0;
+            position: relative;
+            overflow: hidden;
+            min-width: 200px;
+        }
+
+        .admin-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            margin: 10px auto;
+            min-width: 150px;
+            padding: 12px 30px;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 8px 15px;
+            margin: 5px;
+            min-width: auto;
+            font-size: 0.9rem;
+        }
+
+        .sync-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            padding: 8px 15px;
+            margin: 5px;
+            min-width: auto;
+            font-size: 0.9rem;
+        }
+
+        .view-activities-btn {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            padding: 10px 20px;
+            margin: 15px auto;
+            font-size: 1rem;
+            border-radius: 25px;
+            min-width: auto;
+        }
+
+        .submit-btn::before, .admin-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .submit-btn:hover::before, .admin-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover, .admin-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:active, .admin-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .project-list {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .project-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .project-info {
+            flex: 1;
+        }
+
+        .project-number {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .project-name {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .employee-assignment {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .employee-assignment h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .employee-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .employee-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e6ed;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .employee-checkbox-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .employee-checkbox-item input[type="checkbox"] {
+            margin: 0;
+            transform: scale(1.2);
+        }
+
+        .employee-checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .project-employees {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .project-employees .employee-tag {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            display: inline-block;
+            margin-bottom: 3px;
+        }
+
+        .edit-project-btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            padding: 8px 15px;
+            margin: 5px;
+            min-width: auto;
+            font-size: 0.9rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .admin-section {
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .admin-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .github-config {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e6ed;
+        }
+
+        .github-config h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .github-icon {
+            width: 24px;
+            height: 24px;
+            fill: #2c3e50;
+        }
+
+        .config-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .config-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background: #27ae60;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+        }
+
+        .status-disconnected {
+            background: #e74c3c;
+        }
+
+        .status-syncing {
+            background: #f39c12;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .sync-info {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+        }
+
+        .employee-list {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .debug-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 9999;
+            display: none;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        /* Activities Modal Styles */
+        .activities-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .activities-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .activities-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .activities-modal-header h2 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close-activities-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-activities-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .activities-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .activities-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .activity-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .activity-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        .activity-date {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .activity-progress {
+            display: inline-block;
+            background: #27ae60;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .activity-progress.not-started { background: #95a5a6; }
+        .activity-progress.in-progress { background: #3498db; }
+        .activity-progress.on-hold { background: #f39c12; }
+        .activity-progress.completed { background: #27ae60; }
+
+        .activity-task {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .activity-details {
+            font-size: 0.9rem;
+            color: #666;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e6ed;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .detail-icon {
+            width: 16px;
+            height: 16px;
+            fill: #667eea;
+        }
+
+        .support-needed {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .support-needed-header {
+            color: #856404;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .no-activities {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .no-activities-icon {
+            width: 80px;
+            height: 80px;
+            fill: #bbb;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e6ed;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 10px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            height: fit-content;
+        }
+
+        .filter-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .activities-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e0e6ed;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .view-activities-section {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .view-activities-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .view-activities-section p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Panel -->
+    <div id="debugPanel" class="debug-panel">
+        <h4>Debug Info:</h4>
+        <div id="debugInfo"></div>
+    </div>
+
+    <!-- Activities Modal -->
+    <div id="activitiesModal" class="activities-modal">
+        <div class="activities-modal-content">
+            <div class="activities-modal-header">
+                <h2 id="activitiesModalTitle">Employee Activities</h2>
+                <button class="close-activities-btn" onclick="closeActivitiesModal()">&times;</button>
+            </div>
+            
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="dateFromFilter">From Date:</label>
+                        <input type="date" id="dateFromFilter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dateToFilter">To Date:</label>
+                        <input type="date" id="dateToFilter">
+                    </div>
+                    <div class="filter-group">
+                        <label for="progressFilter">Progress Status:</label>
+                        <select id="progressFilter">
+                            <option value="">All Status</option>
+                            <option value="Not Started">Not Started</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="50% Complete">50% Complete</option>
+                            <option value="75% Complete">75% Complete</option>
+                            <option value="Nearly Complete">Nearly Complete</option>
+                            <option value="Completed">Completed</option>
+                            <option value="On Hold">On Hold</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <button class="filter-btn" onclick="applyFilters()">Apply Filters</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activities Summary -->
+            <div class="activities-summary" id="activitiesSummary">
+                <div class="summary-item">
+                    <div class="summary-value" id="totalActivities">0</div>
+                    <div class="summary-label">Total Activities</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="avgProgress">0%</div>
+                    <div class="summary-label">Avg Progress</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="daysWorked">0</div>
+                    <div class="summary-label">Days Worked</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value" id="supportRequests">0</div>
+                    <div class="summary-label">Support Requests</div>
+                </div>
+            </div>
+            
+            <!-- Activities List -->
+            <div id="activitiesList" class="activities-list">
+                <!-- Activities will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="sync-status" id="syncStatus">
+                <span class="status-indicator status-disconnected"></span>
+                Not Connected
+            </div>
+            <h1>Daily Tasker</h1>
+            <p>Team Task Management & Progress Tracking (GitHub Sync)</p>
+        </div>
+        
+        <div class="tab-container">
+            <button class="tab-button active" onclick="showTab(event, 'report')">Task Report</button>
+            <button class="tab-button" id="adminTabBtn" onclick="showAdminTab(event)">Manage Projects</button>
+            <button class="tab-button" onclick="showTab(event, 'sync')">GitHub Sync</button>
+        </div>
+
+        <!-- GitHub Sync Tab -->
+        <div id="syncTab" class="tab-content">
+            <div class="github-config">
+                <h4>
+                    <svg class="github-icon" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub Repository Configuration
+                </h4>
+                
+                <div class="config-row">
+                    <div class="form-group">
+                        <label for="githubToken">GitHub Personal Access Token</label>
+                        <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                        <small style="color: #666; font-size: 0.8rem;">Generate at: Settings > Developer settings > Personal access tokens</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="githubRepo">Repository (owner/repo)</label>
+                        <input type="text" id="githubRepo" placeholder="yourusername/daily-tasker-data">
+                    </div>
+                </div>
+                
+                <div class="config-row">
+                    <div class="form-group">
+                        <label for="githubBranch">Branch</label>
+                        <input type="text" id="githubBranch" value="main" placeholder="main">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="githubPath">Data File Path</label>
+                        <input type="text" id="githubPath" value="data/tasker-data.json" placeholder="data/tasker-data.json">
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="admin-btn" onclick="testGitHubConnection()">Test Connection</button>
+                    <button class="admin-btn sync-btn" onclick="syncFromGitHub()">Sync From GitHub</button>
+                    <button class="admin-btn sync-btn" onclick="syncToGitHub()">Sync To GitHub</button>
+                </div>
+                
+                <div class="sync-info">
+                    <h4>Setup Instructions:</h4>
+                    <ol style="margin: 10px 0; padding-left: 20px;">
+                        <li>Create a GitHub repository (can be private)</li>
+                        <li>Generate a Personal Access Token with 'repo' permissions</li>
+                        <li>Enter your repository details above</li>
+                        <li>Click "Test Connection" to verify setup</li>
+                        <li>Use "Sync To GitHub" to save data and "Sync From GitHub" to load data</li>
+                    </ol>
+                    <p><strong>Auto-sync:</strong> Data automatically syncs when you make changes (if configured)</p>
+                    
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin-top: 15px;">
+                        <h5 style="color: #856404; margin: 0 0 10px 0;">🔒 Multi-Device Usage:</h5>
+                        <ul style="color: #856404; margin: 0; padding-left: 20px; font-size: 0.9rem;">
+                            <li><strong>Each device needs its own setup</strong> - GitHub tokens are not shared for security</li>
+                            <li><strong>Team usage:</strong> Create a shared repository and give team members access</li>
+                            <li><strong>Data sync:</strong> Use "Sync From GitHub" on new devices to load existing data</li>
+                            <li><strong>Security:</strong> Never share your personal access token with others</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="autoSync" onchange="toggleAutoSync()">
+                        Enable automatic sync on data changes
+                    </label>
+                </div>
+                
+                <div id="syncLog" style="margin-top: 20px; max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.8rem;">
+                    <div style="color: #666;">Sync log will appear here...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Login Modal -->
+        <div id="adminLoginModal" class="modal">
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <h2 style="color: #2c3e50; margin-bottom: 20px;">Admin Access Required</h2>
+                <p style="color: #666; margin-bottom: 30px;">Enter admin password to manage projects</p>
+                <input type="password" id="adminPassword" placeholder="Enter admin password" style="width: 100%; padding: 15px; border: 2px solid #e0e6ed; border-radius: 12px; font-size: 1rem; margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="verifyAdminPassword()" style="background: #667eea; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Login</button>
+                    <button onclick="closeAdminLogin()" style="background: #95a5a6; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+                <div id="loginError" style="color: #e74c3c; margin-top: 15px; display: none;">Incorrect password. Please try again.</div>
+            </div>
+        </div>
+
+        <!-- Edit Project Modal -->
+        <div id="editProjectModal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Project</h2>
+                <div class="form-group">
+                    <label for="editProjectNumber">Project Number</label>
+                    <input type="text" id="editProjectNumber" readonly style="background: #e9ecef;">
+                </div>
+                <div class="form-group">
+                    <label for="editProjectName">Project Name</label>
+                    <input type="text" id="editProjectName">
+                </div>
+                
+                <div class="employee-assignment">
+                    <h4>Assign Employees to Project</h4>
+                    <div id="editProjectEmployees" class="employee-checkboxes">
+                        <!-- Employee checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button class="save-btn" onclick="saveProjectChanges()">Save Changes</button>
+                    <button class="cancel-btn" onclick="closeEditProjectModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Report Tab -->
+        <div id="reportTab" class="tab-content active">
+            <div class="success-message" id="successMessage">
+                Your task report has been submitted successfully!
+            </div>
+            
+            <div class="error-message" id="errorMessage">
+                Please fill in all required fields before submitting.
+            </div>
+            
+            <form id="taskForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="employeeName">Employee Name <span class="required">*</span></label>
+                        <select id="employeeName" name="employeeName" required onchange="onEmployeeChange()">
+                            <option value="">Select employee...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="date">Date <span class="required">*</span></label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectSelect">Select Project <span class="required">*</span></label>
+                        <select id="projectSelect" name="projectSelect" required onchange="updateProjectFields()">
+                            <option value="">Choose a project...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="customProject" onchange="toggleCustomProject()">
+                            Enter custom project
+                        </label>
+                    </div>
+                </div>
+
+                <!-- View Activities Section -->
+                <div id="viewActivitiesSection" class="view-activities-section" style="display: none;">
+                    <h4>📊 View Previous Activities</h4>
+                    <p>See all activities for <span id="selectedEmployeeProject"></span></p>
+                    <button type="button" class="admin-btn view-activities-btn" onclick="showEmployeeActivities()">
+                        View Activities History
+                    </button>
+                </div>
+
+                <div id="customProjectFields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customProjectNumber">Custom Project Number</label>
+                            <input type="text" id="customProjectNumber" name="customProjectNumber" placeholder="e.g., PRJ-2024-001">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customProjectName">Custom Project Name</label>
+                            <input type="text" id="customProjectName" name="customProjectName" placeholder="Enter project name">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="selectedProjectNumber">Project Number <span class="required">*</span></label>
+                        <input type="text" id="selectedProjectNumber" name="selectedProjectNumber" readonly style="background: #e9ecef;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="selectedProjectName">Project Name <span class="required">*</span></label>
+                        <input type="text" id="selectedProjectName" name="selectedProjectName" readonly style="background: #e9ecef;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="daysRequired">Number of Days Required to Complete <span class="required">*</span></label>
+                    <input type="number" id="daysRequired" name="daysRequired" min="1" placeholder="Enter number of days" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="additionalProjects">Additional Projects (if any)</label>
+                    <textarea id="additionalProjects" name="additionalProjects" placeholder="List any other projects you're working on simultaneously..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="taskDescription">Today's Task Description</label>
+                    <textarea id="taskDescription" name="taskDescription" placeholder="Describe what you worked on today..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="progress">Progress Status</label>
+                    <select id="progress" name="progress">
+                        <option value="">Select progress status</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="50% Complete">50% Complete</option>
+                        <option value="75% Complete">75% Complete</option>
+                        <option value="Nearly Complete">Nearly Complete</option>
+                        <option value="Completed">Completed</option>
+                        <option value="On Hold">On Hold</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Do you need additional support? <span class="required">*</span></label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-wrapper">
+                            <input type="radio" id="supportYes" name="needSupport" value="Yes" required>
+                            <label for="supportYes">Yes</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="radio" id="supportNo" name="needSupport" value="No" required>
+                            <label for="supportNo">No</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="supportDetails" style="display: none;">
+                    <label for="supportDescription">What kind of support do you need?</label>
+                    <textarea id="supportDescription" name="supportDescription" placeholder="Please describe the support you need..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    Submit Task Report
+                </button>
+            </form>
+        </div>
+
+        <!-- Admin Tab -->
+        <div id="adminTab" class="tab-content">
+            <div class="admin-section">
+                <h3>Add New Employee</h3>
+                <div class="form-group">
+                    <label for="newEmployeeName">Employee Name</label>
+                    <input type="text" id="newEmployeeName" placeholder="Enter employee full name">
+                </div>
+                <button class="admin-btn" onclick="addEmployee()">Add Employee</button>
+            </div>
+
+            <div class="admin-section">
+                <h3>Current Employees</h3>
+                <div id="employeeList" class="employee-list">
+                    <!-- Employee list will be populated here -->
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3>Add New Project</h3>
+                <div class="form-group">
+                    <label for="newProjectNumber">Project Number</label>
+                    <input type="text" id="newProjectNumber" placeholder="e.g., PRJ-2024-001">
+                </div>
+                <div class="form-group">
+                    <label for="newProjectName">Project Name</label>
+                    <input type="text" id="newProjectName" placeholder="Enter project name">
+                </div>
+                
+                <div class="employee-assignment">
+                    <h4>Assign Employees to Project</h4>
+                    <div id="projectEmployees" class="employee-checkboxes">
+                        <!-- Employee checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
+                <button class="admin-btn" onclick="addProject()">Add Project</button>
+            </div>
+
+            <div class="admin-section">
+                <h3>Current Projects</h3>
+                <div id="projectList" class="project-list">
+                    <!-- Project list will be populated here -->
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3>Admin Settings</h3>
+                <div class="form-group">
+                    <label for="changeAdminPassword">Change Admin Password</label>
+                    <input type="password" id="changeAdminPassword" placeholder="Enter new admin password">
+                </div>
+                <button class="admin-btn" onclick="changeAdminPassword()">Update Password</button>
+                
+                <div style="margin-top: 20px;">
+                    <button class="admin-btn delete-btn" onclick="clearAllData()">Clear All Data</button>
+                    <button class="admin-btn" onclick="exportData()">Export Data</button>
+                    <input type="file" id="importDataFile" accept=".json" style="display: none;" onchange="importData()">
+                    <button class="admin-btn" onclick="document.getElementById('importDataFile').click()">Import Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let employees = [];
+        let projects = [];
+        let reports = [];
+        let adminPassword = 'admin123';
+        let isAdminLoggedIn = false;
+        let currentEditingProject = null;
+        let currentEmployeeActivities = [];
+        let filteredActivities = [];
+
+        // GitHub configuration
+        let githubConfig = {
+            token: '',
+            repo: '',
+            branch: 'main',
+            path: 'data/tasker-data.json',
+            autoSync: false
+        };
+
+        // Debug function
+        function debugLog(message) {
+            const debugPanel = document.getElementById('debugPanel');
+            const debugInfo = document.getElementById('debugInfo');
+            if (debugPanel && debugInfo) {
+                debugInfo.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+                debugPanel.scrollTop = debugPanel.scrollHeight;
+            }
+            console.log(`[Daily Tasker Debug] ${message}`);
+        }
+
+        // Safe memory storage operations
+        function safeGetFromMemory(key, defaultValue = null) {
+            try {
+                if (typeof window !== 'undefined' && window.dailyTaskerData && window.dailyTaskerData[key]) {
+                    return window.dailyTaskerData[key];
+                }
+                return defaultValue;
+            } catch (error) {
+                debugLog(`Error reading from memory (${key}): ${error.message}`);
+                return defaultValue;
+            }
+        }
+
+        function safeSetToMemory(key, value) {
+            try {
+                if (typeof window !== 'undefined') {
+                    if (!window.dailyTaskerData) {
+                        window.dailyTaskerData = {};
+                    }
+                    window.dailyTaskerData[key] = value;
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                debugLog(`Error writing to memory (${key}): ${error.message}`);
+                return false;
+            }
+        }
+
+        // Activities Modal Functions
+        function showEmployeeActivities() {
+            const employeeName = document.getElementById('employeeName').value;
+            const projectSelect = document.getElementById('projectSelect').value;
+            
+            if (!employeeName || !projectSelect) {
+                showMessage('error', 'Please select both employee and project first.');
+                return;
+            }
+            
+            const project = JSON.parse(projectSelect);
+            showActivitiesModal(employeeName, project.number, project.name);
+        }
+
+        function showActivitiesModal(employeeName, projectNumber, projectName) {
+            try {
+                debugLog(`Showing activities for ${employeeName} on project ${projectNumber}`);
+                
+                // Get all activities for this employee and project
+                currentEmployeeActivities = reports.filter(report => 
+                    report.employeeName === employeeName && 
+                    report.selectedProjectNumber === projectNumber
+                ).sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // Set modal title
+                document.getElementById('activitiesModalTitle').textContent = 
+                    `${employeeName} - ${projectNumber} (${projectName})`;
+                
+                // Reset filters
+                resetActivityFilters();
+                
+                // Apply filters and show activities
+                filteredActivities = [...currentEmployeeActivities];
+                updateActivitiesSummary();
+                renderActivitiesList();
+                
+                // Show modal
+                document.getElementById('activitiesModal').style.display = 'flex';
+                
+                debugLog(`Found ${currentEmployeeActivities.length} activities`);
+            } catch (error) {
+                debugLog(`Error in showActivitiesModal: ${error.message}`);
+                showMessage('error', 'Error loading activities. Please try again.');
+            }
+        }
+
+        function closeActivitiesModal() {
+            try {
+                document.getElementById('activitiesModal').style.display = 'none';
+                currentEmployeeActivities = [];
+                filteredActivities = [];
+            } catch (error) {
+                debugLog(`Error in closeActivitiesModal: ${error.message}`);
+            }
+        }
+
+        function resetActivityFilters() {
+            try {
+                document.getElementById('dateFromFilter').value = '';
+                document.getElementById('dateToFilter').value = '';
+                document.getElementById('progressFilter').value = '';
+            } catch (error) {
+                debugLog(`Error in resetActivityFilters: ${error.message}`);
+            }
+        }
+
+        function applyFilters() {
+            try {
+                const fromDate = document.getElementById('dateFromFilter').value;
+                const toDate = document.getElementById('dateToFilter').value;
+                const progressFilter = document.getElementById('progressFilter').value;
+                
+                filteredActivities = currentEmployeeActivities.filter(activity => {
+                    let include = true;
+                    
+                    // Date range filter
+                    if (fromDate && new Date(activity.date) < new Date(fromDate)) {
+                        include = false;
+                    }
+                    if (toDate && new Date(activity.date) > new Date(toDate)) {
+                        include = false;
+                    }
+                    
+                    // Progress filter
+                    if (progressFilter && activity.progress !== progressFilter) {
+                        include = false;
+                    }
+                    
+                    return include;
+                });
+                
+                updateActivitiesSummary();
+                renderActivitiesList();
+                
+                debugLog(`Applied filters: ${filteredActivities.length} activities shown`);
+            } catch (error) {
+                debugLog(`Error in applyFilters: ${error.message}`);
+            }
+        }
+
+        function updateActivitiesSummary() {
+            try {
+                const totalActivities = filteredActivities.length;
+                const totalActivitiesElement = document.getElementById('totalActivities');
+                const avgProgressElement = document.getElementById('avgProgress');
+                const daysWorkedElement = document.getElementById('daysWorked');
+                const supportRequestsElement = document.getElementById('supportRequests');
+                
+                if (totalActivitiesElement) totalActivitiesElement.textContent = totalActivities;
+                
+                if (totalActivities > 0) {
+                    // Calculate average progress
+                    const progressValues = filteredActivities.map(activity => {
+                        const progress = activity.progress || '';
+                        if (progress.includes('%')) {
+                            return parseInt(progress.replace('%', '').replace(' Complete', ''));
+                        }
+                        const progressMap = {
+                            'Not Started': 0,
+                            'In Progress': 25,
+                            'Nearly Complete': 90,
+                            'Completed': 100,
+                            'On Hold': 0
+                        };
+                        return progressMap[progress] || 0;
+                    }).filter(val => !isNaN(val));
+                    
+                    const avgProg = progressValues.length > 0 
+                        ? Math.round(progressValues.reduce((a, b) => a + b, 0) / progressValues.length)
+                        : 0;
+                    
+                    if (avgProgressElement) avgProgressElement.textContent = `${avgProg}%`;
+                    
+                    // Count unique dates
+                    const uniqueDates = new Set(filteredActivities.map(activity => activity.date));
+                    if (daysWorkedElement) daysWorkedElement.textContent = uniqueDates.size;
+                    
+                    // Count support requests
+                    const supportRequests = filteredActivities.filter(activity => activity.needSupport === 'Yes').length;
+                    if (supportRequestsElement) supportRequestsElement.textContent = supportRequests;
+                } else {
+                    if (avgProgressElement) avgProgressElement.textContent = '0%';
+                    if (daysWorkedElement) daysWorkedElement.textContent = '0';
+                    if (supportRequestsElement) supportRequestsElement.textContent = '0';
+                }
+            } catch (error) {
+                debugLog(`Error in updateActivitiesSummary: ${error.message}`);
+            }
+        }
+
+        function renderActivitiesList() {
+            try {
+                const activitiesList = document.getElementById('activitiesList');
+                
+                if (filteredActivities.length === 0) {
+                    activitiesList.innerHTML = `
+                        <div class="no-activities">
+                            <svg class="no-activities-icon" viewBox="0 0 24 24">
+                                <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+                                <path d="M11 11h2v6h-2zM11 7h2v2h-2z"/>
+                            </svg>
+                            <div>No activities found</div>
+                            <div style="font-size: 0.9rem; margin-top: 10px;">Try adjusting your filters or check if data has been synced.</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                activitiesList.innerHTML = '';
+                
+                filteredActivities.forEach(activity => {
+                    const activityCard = document.createElement('div');
+                    activityCard.className = 'activity-card';
+                    
+                    const date = new Date(activity.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    const progressClass = getProgressClass(activity.progress);
+                    
+                    let supportSection = '';
+                    if (activity.needSupport === 'Yes') {
+                        supportSection = `
+                            <div class="support-needed">
+                                <div class="support-needed-header">🆘 Support Required</div>
+                                <div>${activity.supportDescription || 'No details provided'}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    activityCard.innerHTML = `
+                        <div class="activity-date">${date}</div>
+                        ${activity.progress ? `<div class="activity-progress ${progressClass}">${activity.progress}</div>` : ''}
+                        ${activity.taskDescription ? `<div class="activity-task"><strong>Task:</strong> ${activity.taskDescription}</div>` : ''}
+                        <div class="activity-details">
+                            ${activity.daysRequired ? `
+                                <div class="detail-item">
+                                    <svg class="detail-icon" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+                                        <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586z"/>
+                                    </svg>
+                                    <span>Days Required: ${activity.daysRequired}</span>
+                                </div>
+                            ` : ''}
+                            ${activity.additionalProjects ? `
+                                <div class="detail-item">
+                                    <svg class="detail-icon" viewBox="0 0 24 24">
+                                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                                        <path d="M7 7h10v2H7zM7 11h10v2H7zM7 15h7v2H7z"/>
+                                    </svg>
+                                    <span>Additional Projects: ${activity.additionalProjects}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${supportSection}
+                    `;
+                    
+                    activitiesList.appendChild(activityCard);
+                });
+            } catch (error) {
+                debugLog(`Error in renderActivitiesList: ${error.message}`);
+            }
+        }
+
+        function getProgressClass(progress) {
+            if (!progress) return '';
+            
+            const progressLower = progress.toLowerCase();
+            if (progressLower.includes('not started')) return 'not-started';
+            if (progressLower.includes('in progress')) return 'in-progress';
+            if (progressLower.includes('hold')) return 'on-hold';
+            if (progressLower.includes('complete')) return 'completed';
+            return '';
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                debugLog('Initializing Daily Tasker application...');
+                
+                // Initialize memory storage
+                if (typeof window !== 'undefined' && !window.dailyTaskerData) {
+                    window.dailyTaskerData = {};
+                }
+                
+                // Load data from memory safely
+                employees = safeGetFromMemory('employees', []);
+                projects = safeGetFromMemory('projects', []);
+                reports = safeGetFromMemory('reports', []);
+                adminPassword = safeGetFromMemory('adminPassword', 'admin123');
+                githubConfig = safeGetFromMemory('githubConfig', {
+                    token: '',
+                    repo: '',
+                    branch: 'main',
+                    path: 'data/tasker-data.json',
+                    autoSync: false
+                });
+
+                debugLog(`Loaded: ${employees.length} employees, ${projects.length} projects, ${reports.length} reports`);
+                
+                // Set today's date
+                const dateInput = document.getElementById('date');
+                if (dateInput) {
+                    dateInput.valueAsDate = new Date();
+                }
+                
+                // Load data
+                loadEmployees();
+                loadProjects();
+                updateEmployeeCheckboxes();
+                
+                // Load GitHub config
+                loadGitHubConfig();
+                
+                // Add form submit handler
+                const taskForm = document.getElementById('taskForm');
+                if (taskForm) {
+                    taskForm.addEventListener('submit', handleFormSubmit);
+                }
+                
+                // Add support radio button handlers
+                document.querySelectorAll('input[name="needSupport"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        const supportDetails = document.getElementById('supportDetails');
+                        const supportDescription = document.getElementById('supportDescription');
+                        if (this.value === 'Yes') {
+                            supportDetails.style.display = 'block';
+                            if (supportDescription) supportDescription.required = true;
+                        } else {
+                            supportDetails.style.display = 'none';
+                            if (supportDescription) {
+                                supportDescription.required = false;
+                                supportDescription.value = '';
+                            }
+                        }
+                    });
+                });
+
+                // Add enter key handler for admin password
+                const adminPasswordInput = document.getElementById('adminPassword');
+                if (adminPasswordInput) {
+                    adminPasswordInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            verifyAdminPassword();
+                        }
+                    });
+                }
+
+                // Add debug panel toggle (Ctrl+D)
+                document.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.key === 'd') {
+                        e.preventDefault();
+                        const debugPanel = document.getElementById('debugPanel');
+                        if (debugPanel) {
+                            debugPanel.classList.toggle('show');
+                        }
+                    }
+                });
+
+                debugLog('Application initialized successfully');
+                
+            } catch (error) {
+                debugLog(`Initialization error: ${error.message}`);
+                console.error('Initialization error:', error);
+            }
+        });
+
+        // Tab management
+        function showTab(event, tabName) {
+            try {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Remove active class from all tab buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                const tabContent = document.getElementById(tabName + 'Tab');
+                if (tabContent) {
+                    tabContent.classList.add('active');
+                }
+                
+                // Add active class to clicked tab button
+                if (event && event.target) {
+                    event.target.classList.add('active');
+                }
+                
+                debugLog(`Switched to tab: ${tabName}`);
+            } catch (error) {
+                debugLog(`Error in showTab: ${error.message}`);
+            }
+        }
+
+        function showAdminTab(event) {
+            try {
+                if (!isAdminLoggedIn) {
+                    document.getElementById('adminLoginModal').style.display = 'flex';
+                    return;
+                }
+                showTab(event, 'admin');
+                updateEmployeeCheckboxes();
+                debugLog('Admin tab accessed');
+            } catch (error) {
+                debugLog(`Error in showAdminTab: ${error.message}`);
+            }
+        }
+
+        // Admin authentication
+        function verifyAdminPassword() {
+            try {
+                const enteredPassword = document.getElementById('adminPassword').value;
+                if (enteredPassword === adminPassword) {
+                    isAdminLoggedIn = true;
+                    closeAdminLogin();
+                    showTab(null, 'admin');
+                    updateEmployeeCheckboxes();
+                    debugLog('Admin login successful');
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                    document.getElementById('adminPassword').value = '';
+                    debugLog('Admin login failed');
+                }
+            } catch (error) {
+                debugLog(`Error in verifyAdminPassword: ${error.message}`);
+            }
+        }
+
+        function closeAdminLogin() {
+            try {
+                document.getElementById('adminLoginModal').style.display = 'none';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('loginError').style.display = 'none';
+            } catch (error) {
+                debugLog(`Error in closeAdminLogin: ${error.message}`);
+            }
+        }
+
+        // Employee management
+        function loadEmployees() {
+            try {
+                const employeeSelect = document.getElementById('employeeName');
+                if (!employeeSelect) {
+                    debugLog('Employee select element not found');
+                    return;
+                }
+                
+                employeeSelect.innerHTML = '<option value="">Select employee...</option>';
+                
+                employees.forEach(employee => {
+                    const option = document.createElement('option');
+                    option.value = employee;
+                    option.textContent = employee;
+                    employeeSelect.appendChild(option);
+                });
+                
+                updateEmployeeList();
+                debugLog(`Loaded ${employees.length} employees into dropdown`);
+            } catch (error) {
+                debugLog(`Error in loadEmployees: ${error.message}`);
+            }
+        }
+
+        function addEmployee() {
+            try {
+                const newEmployeeInput = document.getElementById('newEmployeeName');
+                if (!newEmployeeInput) {
+                    debugLog('New employee input not found');
+                    return;
+                }
+                
+                const newEmployeeName = newEmployeeInput.value.trim();
+                if (newEmployeeName && !employees.includes(newEmployeeName)) {
+                    employees.push(newEmployeeName);
+                    safeSetToMemory('employees', employees);
+                    loadEmployees();
+                    updateEmployeeCheckboxes();
+                    newEmployeeInput.value = '';
+                    
+                    debugLog(`Added employee: ${newEmployeeName}`);
+                    
+                    if (githubConfig.autoSync) {
+                        syncToGitHub();
+                    }
+                } else if (employees.includes(newEmployeeName)) {
+                    showMessage('error', 'Employee already exists');
+                }
+            } catch (error) {
+                debugLog(`Error in addEmployee: ${error.message}`);
+            }
+        }
+
+        function removeEmployee(employeeName) {
+            try {
+                if (confirm(`Are you sure you want to remove ${employeeName}?`)) {
+                    employees = employees.filter(emp => emp !== employeeName);
+                    safeSetToMemory('employees', employees);
+                    loadEmployees();
+                    updateEmployeeCheckboxes();
+                    
+                    debugLog(`Removed employee: ${employeeName}`);
+                    
+                    if (githubConfig.autoSync) {
+                        syncToGitHub();
+                    }
+                }
+            } catch (error) {
+                debugLog(`Error in removeEmployee: ${error.message}`);
+            }
+        }
+
+        function updateEmployeeList() {
+            try {
+                const employeeList = document.getElementById('employeeList');
+                if (!employeeList) return;
+                
+                employeeList.innerHTML = '';
+                
+                employees.forEach(employee => {
+                    const employeeItem = document.createElement('div');
+                    employeeItem.className = 'employee-item';
+                    employeeItem.innerHTML = `
+                        <span>${employee}</span>
+                        <button class="admin-btn delete-btn" onclick="removeEmployee('${employee.replace(/'/g, "\\'")}')">Remove</button>
+                    `;
+                    employeeList.appendChild(employeeItem);
+                });
+                
+                debugLog(`Updated employee list with ${employees.length} employees`);
+            } catch (error) {
+                debugLog(`Error in updateEmployeeList: ${error.message}`);
+            }
+        }
+
+        // Project management
+        function loadProjects() {
+            try {
+                const projectSelect = document.getElementById('projectSelect');
+                if (!projectSelect) {
+                    debugLog('Project select element not found');
+                    return;
+                }
+                
+                // Check if an employee is already selected
+                const employeeSelect = document.getElementById('employeeName');
+                const selectedEmployee = employeeSelect ? employeeSelect.value : '';
+                
+                projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+                
+                if (selectedEmployee) {
+                    // Show only projects assigned to the selected employee
+                    const employeeProjects = projects.filter(project => 
+                        project.employees.includes(selectedEmployee)
+                    );
+                    
+                    employeeProjects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(project);
+                        option.textContent = `${project.number} - ${project.name}`;
+                        projectSelect.appendChild(option);
+                    });
+                    
+                    if (employeeProjects.length === 0) {
+                        const noProjectsOption = document.createElement('option');
+                        noProjectsOption.value = '';
+                        noProjectsOption.textContent = 'No projects assigned to this employee';
+                        noProjectsOption.disabled = true;
+                        noProjectsOption.style.color = '#999';
+                        projectSelect.appendChild(noProjectsOption);
+                    }
+                    
+                    debugLog(`Loaded ${employeeProjects.length} projects for employee: ${selectedEmployee}`);
+                } else {
+                    // Show all projects if no employee is selected
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(project);
+                        option.textContent = `${project.number} - ${project.name}`;
+                        projectSelect.appendChild(option);
+                    });
+                    
+                    debugLog(`Loaded ${projects.length} projects into dropdown`);
+                }
+                
+                updateProjectList();
+            } catch (error) {
+                debugLog(`Error in loadProjects: ${error.message}`);
+            }
+        }
+
+        function addProject() {
+            try {
+                const projectNumber = document.getElementById('newProjectNumber').value.trim();
+                const projectName = document.getElementById('newProjectName').value.trim();
+                
+                if (!projectNumber || !projectName) {
+                    showMessage('error', 'Please enter both project number and name.');
+                    return;
+                }
+                
+                // Check if project number already exists
+                if (projects.some(p => p.number === projectNumber)) {
+                    showMessage('error', 'Project number already exists. Please use a different number.');
+                    return;
+                }
+                
+                // Get selected employees
+                const selectedEmployees = [];
+                document.querySelectorAll('#projectEmployees input[type="checkbox"]:checked').forEach(checkbox => {
+                    selectedEmployees.push(checkbox.value);
+                });
+                
+                const newProject = {
+                    number: projectNumber,
+                    name: projectName,
+                    employees: selectedEmployees
+                };
+                
+                projects.push(newProject);
+                safeSetToMemory('projects', projects);
+                loadProjects();
+                
+                // Clear form
+                document.getElementById('newProjectNumber').value = '';
+                document.getElementById('newProjectName').value = '';
+                document.querySelectorAll('#projectEmployees input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                debugLog(`Added project: ${projectNumber} - ${projectName}`);
+                showMessage('success', 'Project added successfully!');
+                
+                if (githubConfig.autoSync) {
+                    syncToGitHub();
+                }
+            } catch (error) {
+                debugLog(`Error in addProject: ${error.message}`);
+                showMessage('error', 'Error adding project. Please try again.');
+            }
+        }
+
+        function removeProject(projectNumber) {
+            try {
+                if (confirm(`Are you sure you want to remove project ${projectNumber}?`)) {
+                    projects = projects.filter(p => p.number !== projectNumber);
+                    safeSetToMemory('projects', projects);
+                    loadProjects();
+                    
+                    debugLog(`Removed project: ${projectNumber}`);
+                    showMessage('success', 'Project removed successfully!');
+                    
+                    if (githubConfig.autoSync) {
+                        syncToGitHub();
+                    }
+                }
+            } catch (error) {
+                debugLog(`Error in removeProject: ${error.message}`);
+            }
+        }
+
+        function editProject(projectNumber) {
+            try {
+                const project = projects.find(p => p.number === projectNumber);
+                if (!project) {
+                    debugLog(`Project not found: ${projectNumber}`);
+                    return;
+                }
+                
+                currentEditingProject = project;
+                
+                document.getElementById('editProjectNumber').value = project.number;
+                document.getElementById('editProjectName').value = project.name;
+                
+                // Load employee checkboxes for editing
+                const editEmployeesContainer = document.getElementById('editProjectEmployees');
+                editEmployeesContainer.innerHTML = '';
+                
+                employees.forEach(employee => {
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'employee-checkbox-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `edit_emp_${employee}`;
+                    checkbox.value = employee;
+                    checkbox.checked = project.employees.includes(employee);
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `edit_emp_${employee}`;
+                    label.textContent = employee;
+                    
+                    checkboxItem.appendChild(checkbox);
+                    checkboxItem.appendChild(label);
+                    editEmployeesContainer.appendChild(checkboxItem);
+                });
+                
+                document.getElementById('editProjectModal').style.display = 'flex';
+                debugLog(`Editing project: ${projectNumber}`);
+            } catch (error) {
+                debugLog(`Error in editProject: ${error.message}`);
+            }
+        }
+
+        function saveProjectChanges() {
+            try {
+                if (!currentEditingProject) {
+                    debugLog('No project being edited');
+                    return;
+                }
+                
+                const newName = document.getElementById('editProjectName').value.trim();
+                if (!newName) {
+                    showMessage('error', 'Please enter a project name.');
+                    return;
+                }
+                
+                // Get selected employees
+                const selectedEmployees = [];
+                document.querySelectorAll('#editProjectEmployees input[type="checkbox"]:checked').forEach(checkbox => {
+                    selectedEmployees.push(checkbox.value);
+                });
+                
+                // Update the project
+                const projectIndex = projects.findIndex(p => p.number === currentEditingProject.number);
+                if (projectIndex !== -1) {
+                    projects[projectIndex].name = newName;
+                    projects[projectIndex].employees = selectedEmployees;
+                    
+                    safeSetToMemory('projects', projects);
+                    loadProjects();
+                    closeEditProjectModal();
+                    
+                    debugLog(`Updated project: ${currentEditingProject.number}`);
+                    showMessage('success', 'Project updated successfully!');
+                    
+                    if (githubConfig.autoSync) {
+                        syncToGitHub();
+                    }
+                }
+            } catch (error) {
+                debugLog(`Error in saveProjectChanges: ${error.message}`);
+            }
+        }
+
+        function closeEditProjectModal() {
+            try {
+                document.getElementById('editProjectModal').style.display = 'none';
+                currentEditingProject = null;
+            } catch (error) {
+                debugLog(`Error in closeEditProjectModal: ${error.message}`);
+            }
+        }
+
+        function updateProjectList() {
+            try {
+                const projectList = document.getElementById('projectList');
+                if (!projectList) return;
+                
+                projectList.innerHTML = '';
+                
+                projects.forEach(project => {
+                    const projectItem = document.createElement('div');
+                    projectItem.className = 'project-item';
+                    
+                    const employeeTagsHtml = project.employees.map(emp => 
+                        `<span class="employee-tag">${emp}</span>`
+                    ).join('');
+                    
+                    projectItem.innerHTML = `
+                        <div class="project-info">
+                            <div class="project-number">${project.number}</div>
+                            <div class="project-name">${project.name}</div>
+                            <div class="project-employees">${employeeTagsHtml}</div>
+                        </div>
+                        <div>
+                            <button class="admin-btn edit-project-btn" onclick="editProject('${project.number.replace(/'/g, "\\'")}')">Edit</button>
+                            <button class="admin-btn delete-btn" onclick="removeProject('${project.number.replace(/'/g, "\\'")}')">Remove</button>
+                        </div>
+                    `;
+                    projectList.appendChild(projectItem);
+                });
+                
+                debugLog(`Updated project list with ${projects.length} projects`);
+            } catch (error) {
+                debugLog(`Error in updateProjectList: ${error.message}`);
+            }
+        }
+
+        function updateEmployeeCheckboxes() {
+            try {
+                const containers = ['projectEmployees', 'editProjectEmployees'];
+                
+                containers.forEach(containerId => {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    
+                    container.innerHTML = '';
+                    
+                    employees.forEach(employee => {
+                        const checkboxItem = document.createElement('div');
+                        checkboxItem.className = 'employee-checkbox-item';
+                        
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.id = `${containerId}_${employee}`;
+                        checkbox.value = employee;
+                        
+                        const label = document.createElement('label');
+                        label.htmlFor = `${containerId}_${employee}`;
+                        label.textContent = employee;
+                        
+                        checkboxItem.appendChild(checkbox);
+                        checkboxItem.appendChild(label);
+                        container.appendChild(checkboxItem);
+                    });
+                });
+                
+                debugLog('Updated employee checkboxes');
+            } catch (error) {
+                debugLog(`Error in updateEmployeeCheckboxes: ${error.message}`);
+            }
+        }
+
+        // Form handling
+        function onEmployeeChange() {
+            try {
+                const employeeSelect = document.getElementById('employeeName');
+                const projectSelect = document.getElementById('projectSelect');
+                const viewActivitiesSection = document.getElementById('viewActivitiesSection');
+                const selectedEmployee = employeeSelect.value;
+                
+                debugLog(`Employee selection changed to: ${selectedEmployee}`);
+                
+                // Clear current project selection
+                projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+                document.getElementById('selectedProjectNumber').value = '';
+                document.getElementById('selectedProjectName').value = '';
+                
+                // Hide view activities section
+                viewActivitiesSection.style.display = 'none';
+                
+                if (selectedEmployee) {
+                    // Filter projects that include this employee
+                    const employeeProjects = projects.filter(project => 
+                        project.employees.includes(selectedEmployee)
+                    );
+                    
+                    debugLog(`Found ${employeeProjects.length} projects for ${selectedEmployee}`);
+                    
+                    employeeProjects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(project);
+                        option.textContent = `${project.number} - ${project.name}`;
+                        projectSelect.appendChild(option);
+                    });
+                    
+                    if (employeeProjects.length === 0) {
+                        const noProjectsOption = document.createElement('option');
+                        noProjectsOption.value = '';
+                        noProjectsOption.textContent = 'No projects assigned to this employee';
+                        noProjectsOption.disabled = true;
+                        noProjectsOption.style.color = '#999';
+                        projectSelect.appendChild(noProjectsOption);
+                    }
+                } else {
+                    // If no employee selected, show all projects
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify(project);
+                        option.textContent = `${project.number} - ${project.name}`;
+                        projectSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                debugLog(`Error in onEmployeeChange: ${error.message}`);
+            }
+        }
+
+        function updateProjectFields() {
+            try {
+                const projectSelect = document.getElementById('projectSelect');
+                const employeeSelect = document.getElementById('employeeName');
+                const viewActivitiesSection = document.getElementById('viewActivitiesSection');
+                const selectedEmployeeProject = document.getElementById('selectedEmployeeProject');
+                const selectedValue = projectSelect.value;
+                const selectedEmployee = employeeSelect.value;
+                
+                if (selectedValue) {
+                    const project = JSON.parse(selectedValue);
+                    document.getElementById('selectedProjectNumber').value = project.number;
+                    document.getElementById('selectedProjectName').value = project.name;
+                    
+                    // Show view activities section if both employee and project are selected
+                    if (selectedEmployee && project.number && !document.getElementById('customProject').checked) {
+                        selectedEmployeeProject.textContent = `${selectedEmployee} on ${project.number}`;
+                        viewActivitiesSection.style.display = 'block';
+                    } else {
+                        viewActivitiesSection.style.display = 'none';
+                    }
+                    
+                    debugLog(`Selected project: ${project.number}`);
+                } else {
+                    document.getElementById('selectedProjectNumber').value = '';
+                    document.getElementById('selectedProjectName').value = '';
+                    viewActivitiesSection.style.display = 'none';
+                }
+            } catch (error) {
+                debugLog(`Error in updateProjectFields: ${error.message}`);
+            }
+        }
+
+        function toggleCustomProject() {
+            try {
+                const customProject = document.getElementById('customProject');
+                const customProjectFields = document.getElementById('customProjectFields');
+                const projectSelect = document.getElementById('projectSelect');
+                const selectedProjectNumber = document.getElementById('selectedProjectNumber');
+                const selectedProjectName = document.getElementById('selectedProjectName');
+                const viewActivitiesSection = document.getElementById('viewActivitiesSection');
+                
+                if (customProject.checked) {
+                    customProjectFields.style.display = 'block';
+                    projectSelect.disabled = true;
+                    projectSelect.required = false;
+                    selectedProjectNumber.readOnly = false;
+                    selectedProjectName.readOnly = false;
+                    selectedProjectNumber.style.background = '#f8f9fa';
+                    selectedProjectName.style.background = '#f8f9fa';
+                    
+                    // Clear project selection and hide view activities section
+                    projectSelect.value = '';
+                    selectedProjectNumber.value = '';
+                    selectedProjectName.value = '';
+                    viewActivitiesSection.style.display = 'none';
+                    
+                    debugLog('Custom project mode enabled');
+                } else {
+                    customProjectFields.style.display = 'none';
+                    projectSelect.disabled = false;
+                    projectSelect.required = true;
+                    selectedProjectNumber.readOnly = true;
+                    selectedProjectName.readOnly = true;
+                    selectedProjectNumber.style.background = '#e9ecef';
+                    selectedProjectName.style.background = '#e9ecef';
+                    
+                    // Clear custom fields
+                    document.getElementById('customProjectNumber').value = '';
+                    document.getElementById('customProjectName').value = '';
+                    
+                    debugLog('Custom project mode disabled');
+                }
+            } catch (error) {
+                debugLog(`Error in toggleCustomProject: ${error.message}`);
+            }
+        }
+
+        function handleFormSubmit(e) {
+            try {
+                e.preventDefault();
+                debugLog('Form submission started');
+                
+                // Get form data
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Handle custom project
+                const customProject = document.getElementById('customProject').checked;
+                if (customProject) {
+                    data.selectedProjectNumber = document.getElementById('customProjectNumber').value;
+                    data.selectedProjectName = document.getElementById('customProjectName').value;
+                }
+                
+                // Validate required fields
+                if (!data.employeeName || !data.date || !data.selectedProjectNumber || !data.selectedProjectName || !data.daysRequired || !data.needSupport) {
+                    showMessage('error', 'Please fill in all required fields.');
+                    debugLog('Form validation failed - missing required fields');
+                    return;
+                }
+                
+                // Add timestamp
+                data.timestamp = new Date().toISOString();
+                data.id = Date.now();
+                
+                // Save report
+                reports.push(data);
+                safeSetToMemory('reports', reports);
+                
+                // Show success message
+                showMessage('success', 'Your task report has been submitted successfully!');
+                debugLog(`Task report submitted for ${data.employeeName}`);
+                
+                // Reset form
+                resetForm();
+                
+                if (githubConfig.autoSync) {
+                    syncToGitHub();
+                }
+            } catch (error) {
+                debugLog(`Error in handleFormSubmit: ${error.message}`);
+                showMessage('error', 'Error submitting form. Please try again.');
+            }
+        }
+
+        function resetForm() {
+            try {
+                const form = document.getElementById('taskForm');
+                if (form) {
+                    form.reset();
+                    document.getElementById('date').valueAsDate = new Date();
+                    document.getElementById('supportDetails').style.display = 'none';
+                    document.getElementById('customProjectFields').style.display = 'none';
+                    document.getElementById('viewActivitiesSection').style.display = 'none';
+                    document.getElementById('projectSelect').disabled = false;
+                    document.getElementById('projectSelect').required = true;
+                    document.getElementById('selectedProjectNumber').readOnly = true;
+                    document.getElementById('selectedProjectName').readOnly = true;
+                    document.getElementById('selectedProjectNumber').style.background = '#e9ecef';
+                    document.getElementById('selectedProjectName').style.background = '#e9ecef';
+                }
+                debugLog('Form reset successfully');
+            } catch (error) {
+                debugLog(`Error in resetForm: ${error.message}`);
+            }
+        }
+
+        function showMessage(type, message) {
+            try {
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+                
+                if (type === 'success') {
+                    successMessage.textContent = message;
+                    successMessage.style.display = 'block';
+                    errorMessage.style.display = 'none';
+                    
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 5000);
+                } else {
+                    errorMessage.textContent = message;
+                    errorMessage.style.display = 'block';
+                    successMessage.style.display = 'none';
+                    
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 5000);
+                }
+                debugLog(`Message shown: ${type} - ${message}`);
+            } catch (error) {
+                debugLog(`Error in showMessage: ${error.message}`);
+            }
+        }
+
+        // Admin functions
+        function changeAdminPassword() {
+            try {
+                const newPassword = document.getElementById('changeAdminPassword').value.trim();
+                if (newPassword) {
+                    adminPassword = newPassword;
+                    safeSetToMemory('adminPassword', adminPassword);
+                    document.getElementById('changeAdminPassword').value = '';
+                    showMessage('success', 'Admin password updated successfully!');
+                    debugLog('Admin password changed');
+                }
+            } catch (error) {
+                debugLog(`Error in changeAdminPassword: ${error.message}`);
+            }
+        }
+
+        function clearAllData() {
+            try {
+                if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+                    if (typeof window !== 'undefined') {
+                        window.dailyTaskerData = {};
+                    }
+                    debugLog('All data cleared');
+                    location.reload();
+                }
+            } catch (error) {
+                debugLog(`Error in clearAllData: ${error.message}`);
+            }
+        }
+
+        function exportData() {
+            try {
+                const data = {
+                    employees: employees,
+                    projects: projects,
+                    reports: reports,
+                    adminPassword: adminPassword,
+                    githubConfig: githubConfig,
+                    exportDate: new Date().toISOString()
+                };
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `daily-tasker-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                debugLog('Data exported successfully');
+                showMessage('success', 'Data exported successfully!');
+            } catch (error) {
+                debugLog(`Error in exportData: ${error.message}`);
+                showMessage('error', 'Error exporting data. Please try again.');
+            }
+        }
+
+        function importData() {
+            try {
+                const file = document.getElementById('importDataFile').files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (data.employees) employees = data.employees;
+                        if (data.projects) projects = data.projects;
+                        if (data.reports) reports = data.reports;
+                        if (data.adminPassword) adminPassword = data.adminPassword;
+                        if (data.githubConfig) githubConfig = data.githubConfig;
+                        
+                        // Save to memory
+                        safeSetToMemory('employees', employees);
+                        safeSetToMemory('projects', projects);
+                        safeSetToMemory('reports', reports);
+                        safeSetToMemory('adminPassword', adminPassword);
+                        safeSetToMemory('githubConfig', githubConfig);
+                        
+                        // Reload interface
+                        loadEmployees();
+                        loadProjects();
+                        updateEmployeeCheckboxes();
+                        loadGitHubConfig();
+                        
+                        showMessage('success', 'Data imported successfully!');
+                        debugLog('Data imported successfully');
+                    } catch (error) {
+                        showMessage('error', 'Error importing data. Please check the file format.');
+                        debugLog(`Error parsing import file: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+            } catch (error) {
+                debugLog(`Error in importData: ${error.message}`);
+                showMessage('error', 'Error importing data. Please try again.');
+            }
+        }
+
+        // GitHub sync functions
+        function loadGitHubConfig() {
+            try {
+                document.getElementById('githubToken').value = githubConfig.token;
+                document.getElementById('githubRepo').value = githubConfig.repo;
+                document.getElementById('githubBranch').value = githubConfig.branch;
+                document.getElementById('githubPath').value = githubConfig.path;
+                document.getElementById('autoSync').checked = githubConfig.autoSync;
+                
+                updateSyncStatus();
+                debugLog('GitHub config loaded');
+            } catch (error) {
+                debugLog(`Error in loadGitHubConfig: ${error.message}`);
+            }
+        }
+
+        function saveGitHubConfig() {
+            try {
+                githubConfig = {
+                    token: document.getElementById('githubToken').value.trim(),
+                    repo: document.getElementById('githubRepo').value.trim(),
+                    branch: document.getElementById('githubBranch').value.trim() || 'main',
+                    path: document.getElementById('githubPath').value.trim() || 'data/tasker-data.json',
+                    autoSync: document.getElementById('autoSync').checked
+                };
+                
+                safeSetToMemory('githubConfig', githubConfig);
+                debugLog('GitHub config saved');
+            } catch (error) {
+                debugLog(`Error in saveGitHubConfig: ${error.message}`);
+            }
+        }
+
+        function updateSyncStatus() {
+            try {
+                const syncStatus = document.getElementById('syncStatus');
+                
+                if (githubConfig.token && githubConfig.repo) {
+                    syncStatus.innerHTML = '<span class="status-indicator status-connected"></span>Connected';
+                    syncStatus.className = 'sync-status sync-connected';
+                } else {
+                    syncStatus.innerHTML = '<span class="status-indicator status-disconnected"></span>Not Connected';
+                    syncStatus.className = 'sync-status sync-disconnected';
+                }
+            } catch (error) {
+                debugLog(`Error in updateSyncStatus: ${error.message}`);
+            }
+        }
+
+        function logSync(message) {
+            try {
+                const syncLog = document.getElementById('syncLog');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.innerHTML = `[${timestamp}] ${message}`;
+                syncLog.appendChild(logEntry);
+                syncLog.scrollTop = syncLog.scrollHeight;
+                debugLog(`Sync: ${message}`);
+            } catch (error) {
+                debugLog(`Error in logSync: ${error.message}`);
+            }
+        }
+
+        async function testGitHubConnection() {
+            saveGitHubConfig();
+            
+            if (!githubConfig.token || !githubConfig.repo) {
+                logSync('❌ Please configure GitHub token and repository');
+                return;
+            }
+            
+            try {
+                logSync('🔄 Testing GitHub connection...');
+                
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}`, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    logSync('✅ GitHub connection successful!');
+                    updateSyncStatus();
+                } else {
+                    logSync(`❌ GitHub connection failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                logSync(`❌ Connection error: ${error.message}`);
+            }
+        }
+
+        async function syncToGitHub() {
+            saveGitHubConfig();
+            
+            if (!githubConfig.token || !githubConfig.repo) {
+                logSync('❌ GitHub not configured');
+                return;
+            }
+            
+            try {
+                logSync('🔄 Syncing data to GitHub...');
+                
+                const data = {
+                    employees: employees,
+                    projects: projects,
+                    reports: reports,
+                    lastSync: new Date().toISOString()
+                };
+                
+                // Get current file (to get SHA for update)
+                let sha = null;
+                try {
+                    const getResponse = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/${githubConfig.path}`, {
+                        headers: {
+                            'Authorization': `token ${githubConfig.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    if (getResponse.ok) {
+                        const fileData = await getResponse.json();
+                        sha = fileData.sha;
+                    }
+                } catch (e) {
+                    // File doesn't exist, will create new
+                }
+                
+                // Create or update file
+                const updateData = {
+                    message: `Update tasker data - ${new Date().toISOString()}`,
+                    content: btoa(JSON.stringify(data, null, 2)),
+                    branch: githubConfig.branch
+                };
+                
+                if (sha) {
+                    updateData.sha = sha;
+                }
+                
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/${githubConfig.path}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (response.ok) {
+                    logSync('✅ Data synced to GitHub successfully!');
+                } else {
+                    const errorData = await response.json();
+                    logSync(`❌ Sync failed: ${errorData.message}`);
+                }
+            } catch (error) {
+                logSync(`❌ Sync error: ${error.message}`);
+            }
+        }
+
+        async function syncFromGitHub() {
+            saveGitHubConfig();
+            
+            if (!githubConfig.token || !githubConfig.repo) {
+                logSync('❌ GitHub not configured');
+                return;
+            }
+            
+            try {
+                logSync('🔄 Syncing data from GitHub...');
+                
+                const response = await fetch(`https://api.github.com/repos/${githubConfig.repo}/contents/${githubConfig.path}`, {
+                    headers: {
+                        'Authorization': `token ${githubConfig.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const fileData = await response.json();
+                    const content = atob(fileData.content);
+                    const data = JSON.parse(content);
+                    
+                    if (data.employees) {
+                        employees = data.employees;
+                        safeSetToMemory('employees', employees);
+                    }
+                    
+                    if (data.projects) {
+                        projects = data.projects;
+                        safeSetToMemory('projects', projects);
+                    }
+                    
+                    if (data.reports) {
+                        reports = data.reports;
+                        safeSetToMemory('reports', reports);
+                    }
+                    
+                    // Reload interface
+                    loadEmployees();
+                    loadProjects();
+                    updateEmployeeCheckboxes();
+                    
+                    logSync('✅ Data synced from GitHub successfully!');
+                } else {
+                    logSync(`❌ Sync failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                logSync(`❌ Sync error: ${error.message}`);
+            }
+        }
+
+        function toggleAutoSync() {
+            try {
+                saveGitHubConfig();
+                updateSyncStatus();
+                
+                if (githubConfig.autoSync) {
+                    logSync('✅ Auto-sync enabled');
+                } else {
+                    logSync('ℹ️ Auto-sync disabled');
+                }
+            } catch (error) {
+                debugLog(`Error in toggleAutoSync: ${error.message}`);
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            try {
+                const adminModal = document.getElementById('adminLoginModal');
+                const editModal = document.getElementById('editProjectModal');
+                const activitiesModal = document.getElementById('activitiesModal');
+                
+                if (event.target === adminModal) {
+                    closeAdminLogin();
+                }
+                
+                if (event.target === editModal) {
+                    closeEditProjectModal();
+                }
+                
+                if (event.target === activitiesModal) {
+                    closeActivitiesModal();
+                }
+            } catch (error) {
+                debugLog(`Error in window.onclick: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
