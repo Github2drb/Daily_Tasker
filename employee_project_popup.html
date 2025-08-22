@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Tasker - Employee Project Activities</title>
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 750px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .cancel-btn, .filter-btn {
+      background: #95a5a6;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .filter-btn {
+      background: #667eea;
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 15px 0 20px 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .stat-number {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    .filter-container {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .filter-container select, .filter-container input {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Employee Project Activity Modal -->
+  <div id="activityModal" class="modal">
+    <div class="modal-content">
+      <h2 id="activityModalTitle"></h2>
+
+      <div class="filter-container">
+        <label for="filterRange">Filter:</label>
+        <select id="filterRange" onchange="applyFilter()">
+          <option value="all">All</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input type="date" id="filterStart" style="display:none;">
+        <input type="date" id="filterEnd" style="display:none;">
+        <button class="filter-btn" id="applyCustomFilter" style="display:none;" onclick="applyCustomFilter()">Apply</button>
+      </div>
+
+      <div id="activityModalSummary"></div>
+      <div id="activityModalBody"></div>
+      <div class="modal-buttons">
+        <button class="cancel-btn" onclick="closeActivityModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentEmployee = null;
+    let currentProject = null;
+    let currentProjectName = null;
+    let fullWorkHistory = [];
+
+    function calculateSummary(workHistory) {
+      if (!workHistory.length) return { total: 0, avg: 0, last: 'Never' };
+
+      const progressValues = workHistory.map(work => {
+        if (work.progress && work.progress.includes('%')) {
+          return parseInt(work.progress.replace('%', ''));
+        }
+        const map = {
+          'Not Started': 0,
+          'In Progress': 25,
+          '50% Complete': 50,
+          '75% Complete': 75,
+          'Nearly Complete': 90,
+          'Completed': 100,
+          'On Hold': 0
+        };
+        return map[work.progress] || 0;
+      });
+
+      const avg = Math.round(progressValues.reduce((a,b) => a+b, 0) / progressValues.length);
+      const lastDate = new Date(workHistory[0].date);
+      const today = new Date();
+      const diffDays = Math.floor((today - lastDate) / (1000*60*60*24));
+
+      let last;
+      if (diffDays === 0) last = 'Today';
+      else if (diffDays === 1) last = 'Yesterday';
+      else last = `${diffDays} days ago`;
+
+      return { total: workHistory.length, avg, last };
+    }
+
+    function renderWorkHistory(workHistory) {
+      const modalBody = document.getElementById('activityModalBody');
+      const modalSummary = document.getElementById('activityModalSummary');
+
+      modalBody.innerHTML = '';
+
+      const summary = calculateSummary(workHistory);
+      modalSummary.innerHTML = `
+        <div class="summary-stats">
+          <div class="stat-item">
+            <div class="stat-number">${summary.total}</div>
+            <div class="stat-label">Work Days</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">${summary.avg}%</div>
+            <div class="stat-label">Avg Progress</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">${summary.last}</div>
+            <div class="stat-label">Last Worked</div>
+          </div>
+        </div>`;
+
+      if (workHistory.length === 0) {
+        modalBody.innerHTML = '<p>No activities found for this project.</p>';
+      } else {
+        workHistory.forEach(work => {
+          const entry = document.createElement('div');
+          entry.style.marginBottom = '15px';
+          entry.style.padding = '10px';
+          entry.style.borderBottom = '1px solid #ddd';
+          entry.innerHTML = `
+            <strong>${new Date(work.date).toLocaleDateString()}</strong><br>
+            📝 ${work.taskDescription || 'No task description'}<br>
+            📊 ${work.progress || 'No progress'}<br>
+            ⏱ Days Required: ${work.daysRequired || '-'}
+          `;
+          modalBody.appendChild(entry);
+        });
+      }
+    }
+
+    function applyFilter() {
+      const range = document.getElementById('filterRange').value;
+      const startInput = document.getElementById('filterStart');
+      const endInput = document.getElementById('filterEnd');
+      const applyBtn = document.getElementById('applyCustomFilter');
+
+      if (range === 'custom') {
+        startInput.style.display = 'inline-block';
+        endInput.style.display = 'inline-block';
+        applyBtn.style.display = 'inline-block';
+        return;
+      } else {
+        startInput.style.display = 'none';
+        endInput.style.display = 'none';
+        applyBtn.style.display = 'none';
+      }
+
+      let filtered = [...fullWorkHistory];
+      if (range !== 'all') {
+        const days = parseInt(range);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        filtered = fullWorkHistory.filter(w => new Date(w.date) >= cutoff);
+      }
+
+      renderWorkHistory(filtered);
+    }
+
+    function applyCustomFilter() {
+      const start = new Date(document.getElementById('filterStart').value);
+      const end = new Date(document.getElementById('filterEnd').value);
+      if (!start || !end) return;
+
+      const filtered = fullWorkHistory.filter(w => {
+        const d = new Date(w.date);
+        return d >= start && d <= end;
+      });
+
+      renderWorkHistory(filtered);
+    }
+
+    function showEmployeeProjectActivities(employeeName, projectNumber, projectName) {
+      let workHistory = getWorkHistory(employeeName, projectNumber);
+      workHistory = workHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      currentEmployee = employeeName;
+      currentProject = projectNumber;
+      currentProjectName = projectName;
+      fullWorkHistory = workHistory;
+
+      document.getElementById('activityModalTitle').textContent = `${employeeName} - ${projectNumber} (${projectName})`;
+      document.getElementById('filterRange').value = 'all';
+      document.getElementById('filterStart').style.display = 'none';
+      document.getElementById('filterEnd').style.display = 'none';
+      document.getElementById('applyCustomFilter').style.display = 'none';
+
+      renderWorkHistory(workHistory);
+
+      document.getElementById('activityModal').style.display = 'flex';
+    }
+
+    function closeActivityModal() {
+      document.getElementById('activityModal').style.display = 'none';
+    }
+
+    function updateProjectFields() {
+      const projectSelect = document.getElementById('projectSelect');
+      if (!projectSelect || !projectSelect.value) return;
+
+      const project = JSON.parse(projectSelect.value);
+      document.getElementById('selectedProjectNumber').value = project.number;
+      document.getElementById('selectedProjectName').value = project.name;
+
+      const employeeName = document.getElementById('employeeName').value;
+      if (employeeName && project.number) {
+        showEmployeeProjectActivities(employeeName, project.number, project.name);
+      }
+    }
+  </script>
+</body>
+</html>
