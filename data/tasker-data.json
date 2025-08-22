@@ -243,7 +243,24 @@
       "supportDescription": "",
       "timestamp": "2025-08-22T15:34:21.607Z",
       "id": 1755876861607
+    },
+    {
+      "employeeName": "KEERTHI .B.H",
+      "date": "2025-08-22",
+      "projectSelect": "{\"number\":\"3A2502 & 3A2503\",\"name\":\"3A2502 & 3A2503-Traction Motor -Stator Housing Shrink Fitting Station & Rotor & Shaft Assembly-LN2 Shrink Fitting Station\",\"employees\":[\"SANTHOSH  N\",\"KEERTHI .B.H\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A2502 & 3A2503",
+      "selectedProjectName": "3A2502 & 3A2503-Traction Motor -Stator Housing Shrink Fitting Station & Rotor & Shaft Assembly-LN2 Shrink Fitting Station",
+      "daysRequired": "2",
+      "additionalProjects": "",
+      "taskDescription": "Varroc03 Nitrogen Chamber Leak Check Support",
+      "progress": "Not Started",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-22T20:04:05.984Z",
+      "id": 1755893045984
     }
   ],
-  "lastSync": "2025-08-22T20:03:14.785Z"
+  "lastSync": "2025-08-22T20:04:05.989Z"
 }
