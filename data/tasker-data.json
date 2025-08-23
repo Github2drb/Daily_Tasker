@@ -182,6 +182,15 @@
         "SUSHANTH  K M",
         "VEERESH  M"
       ]
+    },
+    {
+      "number": "3A-SO1-25025",
+      "name": "Bailer Assembly",
+      "employees": [
+        "SANTHOSH  N",
+        "PRAVEEN KUMAR C",
+        "SUSHANTH  K M"
+      ]
     }
   ],
   "reports": [
@@ -237,5 +246,5 @@
       "id": 1755876861607
     }
   ],
-  "lastSync": "2025-08-22T16:29:52.447Z"
+  "lastSync": "2025-08-23T10:02:14.405Z"
 }
