@@ -33,10 +33,11 @@
       "number": "3W-TT3-25051",
       "name": "560B Spot welding line",
       "employees": [
-        "RAJESH  R",
         "SACHIN  N",
         "PRAKASH  N",
-        "VEERESH  M"
+        "DEEKSHITHA  H C",
+        "VEERESH  M",
+        "NAVEEN"
       ]
     },
     {
@@ -268,5 +269,5 @@
       "id": 1755943438076
     }
   ],
-  "lastSync": "2025-08-23T10:26:23.141Z"
+  "lastSync": "2025-08-23T10:27:29.733Z"
 }
