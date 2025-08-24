@@ -267,7 +267,24 @@
       "supportDescription": "",
       "timestamp": "2025-08-23T10:03:58.076Z",
       "id": 1755943438076
+    },
+    {
+      "employeeName": "PRAVEEN KUMAR C",
+      "date": "2025-08-24",
+      "projectSelect": "{\"number\":\"3A-SO1-25025\",\"name\":\"Bailer Assembly\",\"employees\":[\"SANTHOSH  N\",\"PRAVEEN KUMAR C\",\"SUSHANTH  K M\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A-SO1-25025",
+      "selectedProjectName": "Bailer Assembly",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "",
+      "progress": "",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-24T13:15:26.100Z",
+      "id": 1756041326100
     }
   ],
-  "lastSync": "2025-08-23T11:18:16.273Z"
+  "lastSync": "2025-08-24T13:15:26.106Z"
 }
