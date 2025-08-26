@@ -284,7 +284,24 @@
       "supportDescription": "",
       "timestamp": "2025-08-24T13:15:26.100Z",
       "id": 1756041326100
+    },
+    {
+      "employeeName": "PRAVEEN KUMAR C",
+      "date": "2025-08-26",
+      "projectSelect": "{\"number\":\"3A-SO1-25025\",\"name\":\"Bailer Assembly\",\"employees\":[\"SANTHOSH  N\",\"PRAVEEN KUMAR C\",\"SUSHANTH  K M\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A-SO1-25025",
+      "selectedProjectName": "Bailer Assembly",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "Festo Drive Configuration, EDS Loading in GX Works3",
+      "progress": "In Progress",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-26T15:24:31.246Z",
+      "id": 1756221871251
     }
   ],
-  "lastSync": "2025-08-24T13:15:26.106Z"
+  "lastSync": "2025-08-26T15:24:31.258Z"
 }
