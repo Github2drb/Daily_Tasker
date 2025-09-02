@@ -1,6 +1,241 @@
 {
-  "employees": [],
-  "projects": [],
-  "reports": [],
-  "lastSync": "2025-08-29T11:49:51.831Z"
+  "employees": [
+    "RAJESH  R",
+    "SANTHOSH  N",
+    "PRAVEEN KUMAR C",
+    "SACHIN  N",
+    "KEERTHI .B.H",
+    "PRAKASH  N",
+    "DYUMITH N V",
+    "POTNURI ESWANTH",
+    "MANIKANDAN  P",
+    "DEEKSHITHA  H C",
+    "SUSHANTH  K M",
+    "VEERESH  M"
+  ],
+  "projects": [
+    {
+      "number": "3W2401",
+      "name": "560B Project MRA Roof spot welding line TKM",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "DEEKSHITHA  H C"
+      ]
+    },
+    {
+      "number": "3W-TT3-25051",
+      "name": "560B Spot welding line",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
+    },
+    {
+      "number": "3DBTT202-TTIA-582D",
+      "name": "582D PROJECT WELDING FIXTURE & CELLS",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N"
+      ]
+    },
+    {
+      "number": "3W-SA1-25061",
+      "name": "YFG Project Robotic Mig welding cell & Fixtures",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N"
+      ]
+    },
+    {
+      "number": "3W-SA1-25067 & 3W-SA1-25078(R1J1)",
+      "name": "YFG Project Outer Plate Robotic Mig Welding Line",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
+    },
+    {
+      "number": "3W-TT4-25074 TTIA",
+      "name": "582D PROJECT MAUAL JIGS NUT CHECKING POKA YOKE",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N"
+      ]
+    },
+    {
+      "number": "3W-TT4-25072  TTIA",
+      "name": "NOZZLE CLEANER INSTALLATION & PROGRAMMING SUPPORT",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N"
+      ]
+    },
+    {
+      "number": "3W-TT4-25073 TTIA",
+      "name": "EXISTING JIG POKA YOKE ADDITION 42021.2-KK050 & 42201- KK030",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N"
+      ]
+    },
+    {
+      "number": "3W-UN1-25075",
+      "name": "R1324 Project Apron Part Robotic Spot Welding Fixtures",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
+    },
+    {
+      "number": "3W-SA1-25047",
+      "name": "Welding Fixture 14300-76T80 Stage-02 Jig sensor addition",
+      "employees": [
+        "RAJESH  R",
+        "SACHIN  N",
+        "PRAKASH  N",
+        "VEERESH  M"
+      ]
+    },
+    {
+      "number": "PA23",
+      "name": "Panel Assembly line Automation (PA23)",
+      "employees": [
+        "SANTHOSH  N",
+        "PRAVEEN KUMAR C"
+      ]
+    },
+    {
+      "number": "3A-GB1-25042",
+      "name": "Primer Flow Circuit Upgradation",
+      "employees": [
+        "SANTHOSH  N",
+        "MANIKANDAN  P"
+      ]
+    },
+    {
+      "number": "3A-GB1-25038_(Type-1)",
+      "name": "Pressure Tester Machine for Ultrasound Probes",
+      "employees": [
+        "SANTHOSH  N",
+        "SUSHANTH  K M"
+      ]
+    },
+    {
+      "number": "3A-GB1-25024",
+      "name": "Coil soldering",
+      "employees": [
+        "SANTHOSH  N",
+        "MANIKANDAN  P"
+      ]
+    },
+    {
+      "number": "3A-GB1-25064_(Type-2)",
+      "name": "(Type-2) Pressure Tester Machine for Ultrasound Probes",
+      "employees": [
+        "SANTHOSH  N",
+        "SUSHANTH  K M"
+      ]
+    },
+    {
+      "number": "3A2409",
+      "name": "GLASS TAPING AND O-CELL PICK & PLACE STATION (PA23 Phase -2)",
+      "employees": [
+        "SANTHOSH  N",
+        "PRAVEEN KUMAR C"
+      ]
+    },
+    {
+      "number": "GB1-25062",
+      "name": "GE_Cold plate assembly station A",
+      "employees": [
+        "SANTHOSH  N",
+        "MANIKANDAN  P"
+      ]
+    },
+    {
+      "number": "3A-S03-25066",
+      "name": "D8 Press-in Blind Hole Receptacle - Auto Assembly - SouthCo",
+      "employees": [
+        "SANTHOSH  N",
+        "DYUMITH N V"
+      ]
+    },
+    {
+      "number": "3A-TE1-25029",
+      "name": "SIM R Angle",
+      "employees": [
+        "SANTHOSH  N",
+        "DYUMITH N V",
+        "SUSHANTH  K M",
+        "VEERESH  M"
+      ]
+    }
+  ],
+  "reports": [
+    {
+      "employeeName": "DYUMITH N V",
+      "date": "2025-08-04",
+      "projectSelect": "{\"number\":\"3A-TE1-25029\",\"name\":\"SIM R Angle\",\"employees\":[\"SANTHOSH  N\",\"DYUMITH N V\",\"SUSHANTH  K M\",\"VEERESH  M\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A-TE1-25029",
+      "selectedProjectName": "SIM R Angle",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "SIMR| Angle Trials Taken.CSV shared with NOVA",
+      "progress": "Nearly Complete",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-04T13:35:07.954Z",
+      "id": 1754314507954
+    },
+    {
+      "employeeName": "DYUMITH N V",
+      "date": "2025-08-06",
+      "projectSelect": "{\"number\":\"3A-TE1-25029\",\"name\":\"SIM R Angle\",\"employees\":[\"SANTHOSH  N\",\"DYUMITH N V\",\"SUSHANTH  K M\",\"VEERESH  M\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A-TE1-25029",
+      "selectedProjectName": "SIM R Angle",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "SIMR Angle RH Station Trials",
+      "progress": "Nearly Complete",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-06T12:49:38.163Z",
+      "id": 1754484578163
+    },
+    {
+      "employeeName": "SACHIN  N",
+      "date": "2025-08-22",
+      "projectSelect": "{\"number\":\"3W2401\",\"name\":\"560B Project MRA Roof spot welding line TKM\",\"employees\":[\"RAJESH  R\",\"SACHIN  N\",\"PRAKASH  N\",\"DEEKSHITHA  H C\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3W2401",
+      "selectedProjectName": "560B Project MRA Roof spot welding line TKM",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "TKM Labelling, Coordinating with mechanical team, Sangwoo project technical discussion",
+      "progress": "In Progress",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-08-22T15:34:21.607Z",
+      "id": 1755876861607
+    }
+  ],
+  "lastSync": "2025-08-22T16:29:52.447Z"
 }
