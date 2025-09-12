@@ -13,7 +13,8 @@
     "SUSHANTH  K M",
     "VEERESH  M",
     "Rajesh M",
-    "Naveen"
+    "Naveen",
+    "Sriram"
   ],
   "projects": [
     {
@@ -116,7 +117,8 @@
       "name": "Panel Assembly line Automation (PA23)",
       "employees": [
         "SANTHOSH  N",
-        "PRAVEEN KUMAR C"
+        "PRAVEEN KUMAR C",
+        "KEERTHI .B.H"
       ]
     },
     {
@@ -132,6 +134,7 @@
       "name": "Pressure Tester Machine for Ultrasound Probes",
       "employees": [
         "SANTHOSH  N",
+        "POTNURI ESWANTH",
         "SUSHANTH  K M"
       ]
     },
@@ -156,7 +159,8 @@
       "name": "GLASS TAPING AND O-CELL PICK & PLACE STATION (PA23 Phase -2)",
       "employees": [
         "SANTHOSH  N",
-        "PRAVEEN KUMAR C"
+        "PRAVEEN KUMAR C",
+        "POTNURI ESWANTH"
       ]
     },
     {
@@ -171,8 +175,8 @@
       "number": "3A-S03-25066",
       "name": "D8 Press-in Blind Hole Receptacle - Auto Assembly - SouthCo",
       "employees": [
-        "SANTHOSH  N",
-        "DYUMITH N V"
+        "DYUMITH N V",
+        "Rajesh M"
       ]
     },
     {
@@ -190,7 +194,8 @@
       "name": "Bailer_Assembly",
       "employees": [
         "SANTHOSH  N",
-        "PRAVEEN KUMAR C"
+        "PRAVEEN KUMAR C",
+        "SUSHANTH  K M"
       ]
     }
   ],
@@ -247,5 +252,5 @@
       "id": 1755876861607
     }
   ],
-  "lastSync": "2025-09-02T08:38:24.997Z"
+  "lastSync": "2025-09-12T02:08:06.978Z"
 }
