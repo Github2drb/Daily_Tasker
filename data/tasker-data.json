@@ -250,7 +250,24 @@
       "supportDescription": "",
       "timestamp": "2025-08-22T15:34:21.607Z",
       "id": 1755876861607
+    },
+    {
+      "employeeName": "SANTHOSH  N",
+      "date": "2025-09-15",
+      "projectSelect": "{\"number\":\"3A-SO1-25025\",\"name\":\"Bailer_Assembly\",\"employees\":[\"SANTHOSH  N\",\"PRAVEEN KUMAR C\",\"SUSHANTH  K M\"]}",
+      "customProjectNumber": "",
+      "customProjectName": "",
+      "selectedProjectNumber": "3A-SO1-25025",
+      "selectedProjectName": "Bailer_Assembly",
+      "daysRequired": "1",
+      "additionalProjects": "",
+      "taskDescription": "Eplan Modification",
+      "progress": "In Progress",
+      "needSupport": "No",
+      "supportDescription": "",
+      "timestamp": "2025-09-15T05:18:11.402Z",
+      "id": 1757913491402
     }
   ],
-  "lastSync": "2025-09-12T02:08:06.978Z"
+  "lastSync": "2025-09-15T05:18:11.414Z"
 }
